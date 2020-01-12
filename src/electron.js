@@ -11,10 +11,12 @@ let tray = null;
 function createWindow() {
     mainWindow = new BrowserWindow({
         width: 800,
-        height: 800,
+        height: 600,
         webPreferences: {
             nodeIntegration: true,
+            devTools: true
         },
+
     });
 
     mainWindow.loadURL(
@@ -25,7 +27,9 @@ function createWindow() {
 
     mainWindow.on('closed', () => {
         mainWindow = null
-    })
+    });
+
+    mainWindow.webContents.openDevTools()
 }
 
 const createTray = () => {
