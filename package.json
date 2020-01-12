@@ -14,6 +14,7 @@
     "concurrently": "^5.0.2",
     "electron-is-dev": "^1.1.0",
     "electron-reload": "^1.5.0",
+    "immutable": "^4.0.0-rc.12",
     "nodemon": "^2.0.2",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",

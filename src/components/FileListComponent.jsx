@@ -15,7 +15,7 @@ const FileListComponent = (props) => {
 
     const {files} = props;
 
-    const getFileList = () => files.map((file, index) => (
+    const getFileList = () => files.toIndexedSeq().map((file, index) => (
         <ListItem key={index}>
             <ListItemIcon>
                 <FileIcon/>
@@ -23,7 +23,9 @@ const FileListComponent = (props) => {
             <ListItemText primary={file.name}/>
 
             <ListItemSecondaryAction>
-                <IconButton edge="end" aria-label="delete">
+                <IconButton edge="end" aria-label="delete"
+                            onClick={() => props.onFileDeleted(file)}
+                >
                     <DeleteIcon />
                 </IconButton>
             </ListItemSecondaryAction>
