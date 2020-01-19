@@ -6,7 +6,7 @@ import Peer from "../socket/Peer";
 
 const uuid = require('uuid/v1');
 
-const ConnectRoPeerNetworkButton = (props) => {
+const ConnectToPeerNetworkButton = (props) => {
     const styles = useStyles();
     let peer = null;
 
@@ -53,4 +53,4 @@ const useStyles = makeStyles(() => ({
     }
 }));
 
-export default ConnectRoPeerNetworkButton;
+export default ConnectToPeerNetworkButton;

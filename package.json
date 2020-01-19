@@ -27,7 +27,7 @@
     "test": "rescripts test",
     "eject": "react-scripts eject",
     "electron": "cross-env NODE_ENV=dev nodemon --exec \"\"electron .\"\"",
-    "electron-dev": "concurrently \"BROWSER=none npm start\" \"wait-on http://localhost:3000 && nodemon --exec \"\"electron .\"\"\""
+    "electron-dev": "concurrently \"BROWSER=none yarn start\" \"wait-on http://localhost:3000 && nodemon --exec \"\"electron .\"\"\""
   },
   "build": {
     "appId": "dp.anti.plagiarism",
