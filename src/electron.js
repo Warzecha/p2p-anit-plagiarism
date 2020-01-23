@@ -172,41 +172,7 @@ const splitToArray = (formattedText, size) => {
     }
 };
 
-const getWikiContent = (word) => {
-    const searchUrl = `https://pl.wikipedia.org/w/api.php?format=json&action=opensearch&search=${word}`;
-    const contentUrl = `https://pl.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles=`;
 
-    axios.get(searchUrl)
-        .then(res => {
-            let arrayOfTitles = res.data[1];
-            // console.log(res.data[1]);
-            arrayOfTitles.forEach(title => {
-                const parsedContentUrl = encodeURI(contentUrl + title.replace(/\s+/g, '_'));
-                axios.get(parsedContentUrl)
-                    .then(res => {
-                        const pages = res.data.query.pages;
-                        const pageId = Object.keys(pages)[0];
-                        // console.log(pageId);
-                        // console.log(Object.keys(pages));
-                        console.log(pages[pageId].revisions[0]['*']
-                            .replace(/<(\w+)+>[^<]*<\/\1>/g, '')
-                            .replace(/\[\[[^\|]*\||\]\]|'''/g, '')
-                            .replace(/<!--|-->|:|(^[ \t]*\n)|==[^\]]*/g, '')
-                            .replace(/\[\[|{{|}}/g, '')
-                            .replace(/\|/g, ' ')
-                            .replace(/\s\s/g, ' ')
-                            .replace(', )', ')')
-                            .replace(/Dopracować.*/g, '')
-                            .replace(/(^[ \t]*\n)/g, '')
-                        );
-                        console.log()
-
-                    })
-            });
-
-        })
-
-};
 
 // app.on('window-all-closed', () => {
 //     if (process.platform !== 'darwin') {
