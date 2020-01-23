@@ -38,7 +38,6 @@ function createWindow() {
 
     mainWindow.webContents.openDevTools()
 }
-
 const createTray = () => {
     tray = new Tray('assets/cloud_icon.png');
     const contextMenu = Menu.buildFromTemplate([
@@ -55,22 +54,25 @@ app.on('ready', () => {
 });
 
 ipcMain.on('connectToPearNetwork', ((event, args) => {
-    peer = new Peer("0.0.0.0", "0.0.0.0");
+
+    peer = new Peer(args.selfAddress, args.broadcastAddress, mainWindow);
     peer.bindPeer();
 
     setTimeout(() => {
         peer.broadcastMessage();
-
-        let customPeersList = [peer.peerId, uuid().toString(), uuid().toString()];
+        // let customPeersList = [peer.peerId, uuid().toString(), uuid().toString()];
 
         event.sender.send('connectToPearNetworkResponse', {
             peerId: peer.peerId,
-            peersList: customPeersList
         })
 
     }, 2000);
 
 }));
+
+// ipcMain.on('updatePeerNetwork', ((event, args) => {
+//
+// }));
 
 ipcMain.on('parseFile', ((event, args) => {
     const path = args.files[0].path;

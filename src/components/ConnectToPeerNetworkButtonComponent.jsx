@@ -18,7 +18,11 @@ const ConnectToPeerNetworkButton = (props) => {
         setIsConnected(true);
         setIsLoading(false);
         props.attachSelfId(args.peerId);
-        props.fillPeersList(args.peersList);
+    });
+
+    ipcRenderer.on('updatePeersNetwork', (event, args) => {
+        console.log(args);
+        props.fillPeersList(args.currentNetworkPeers)
     });
 
     const handleClick = () => {
@@ -28,6 +32,8 @@ const ConnectToPeerNetworkButton = (props) => {
             broadcastAddress: broadcastAddress
         })
     };
+
+
 
     const checkValidIpAddress = (stringAddress) => {
         let numberOfDots = stringAddress.match(/\./g);
