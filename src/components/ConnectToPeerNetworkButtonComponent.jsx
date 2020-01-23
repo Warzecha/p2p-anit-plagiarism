@@ -3,7 +3,6 @@ import {makeStyles} from "@material-ui/core";
 import Button from "@material-ui/core/Button";
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Peer from "../socket/Peer";
-
 const uuid = require('uuid/v1');
 
 const ConnectToPeerNetworkButton = (props) => {
@@ -30,13 +29,12 @@ const ConnectToPeerNetworkButton = (props) => {
         customPeersList.add(peer.peerId);
         customPeersList.add(uuid().toString());
         customPeersList.add(uuid().toString());
-
     };
 
     return (
         <div className={styles.root}>
             <Button disabled={isConnected} variant={"contained"} onClick={handleClick}>Connect</Button>
-            {isLoading && <CircularProgress className={styles.progress}></CircularProgress>}
+            {isLoading && <CircularProgress className={styles.progress}/>}
         </div>
     )
 

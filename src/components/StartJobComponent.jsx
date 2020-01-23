@@ -7,6 +7,8 @@ import {Map} from 'immutable';
 import ConnectRoPeerNetworkButton from "./ConnectToPeerNetworkButtonComponent";
 import CurrentNetworkListComponent from "./CurrentNetworkListComponent";
 
+const {ipcRenderer} = require('electron');
+
 const StartJobComponent = () => {
     const styles = useStyles();
 
@@ -15,12 +17,28 @@ const StartJobComponent = () => {
     const [selfId, setSelId] = useState(null);
 
     const handleFilesDropped = (newFiles) => {
-        console.log(newFiles);
         let updatedFiles = files;
         Array.from(newFiles).forEach((newFile) => {
             updatedFiles = updatedFiles.set(newFile.path, newFile);
         });
-        setFiles(updatedFiles)
+        setFiles(updatedFiles);
+        parseFiles(newFiles)
+    };
+
+    let parseFiles = (newFiles) => {
+
+        let data = {
+            files: []
+        };
+
+        Array.from(newFiles).map((file) => {
+            data.files.push({
+                'path': file.path,
+                'name': file.name
+            })
+        });
+
+        ipcRenderer.send('parseFile', data);
     };
 
     const handleFileDeleted = (file) => {
@@ -33,6 +51,7 @@ const StartJobComponent = () => {
             updatedSet.add(peer)
         );
         setPeersList(updatedSet);
+
     };
 
     const attachSelfId = (peerId) => {
@@ -43,7 +62,8 @@ const StartJobComponent = () => {
         <div className={styles.root}>
             <Typography className={styles.heading} variant="h1" align="center">Start job</Typography>
             <div className={styles.networkList}>
-                <ConnectRoPeerNetworkButton peersList={peersList} fillPeersList={fillPeersList} attachSelfId={attachSelfId}/>
+                <ConnectRoPeerNetworkButton peersList={peersList} fillPeersList={fillPeersList}
+                                            attachSelfId={attachSelfId}/>
                 <CurrentNetworkListComponent peersList={peersList} selfId={selfId}/>
             </div>
             <div className={styles.fileInputContainer}>
