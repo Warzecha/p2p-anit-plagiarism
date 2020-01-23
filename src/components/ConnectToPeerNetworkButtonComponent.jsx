@@ -59,13 +59,16 @@ const ConnectToPeerNetworkButton = (props) => {
                            setSelfAddress(event.target.value)
                        }}/>
             <TextField label={"Broadcast address"} error={!validBroadcast}
+                       style={{
+                           marginTop: '10px'
+                       }}
                        onChange={(event) => {
                            checkValidIpBroadBastAddress(event.target.value);
                            setBroadcastAddress(event.target.value);
                        }}/>
             <Button style={{
                 marginTop: '10px'
-            }} disabled={isConnected && !validAddress && !validBroadcast} variant={"contained"}
+            }} disabled={isConnected || (selfAddress == null || broadcastAddress == null) || (!validAddress || !validBroadcast)} variant={"contained"}
                     onClick={handleClick}>Connect</Button>
             {isLoading && <CircularProgress className={styles.progress}/>}
         </div>
