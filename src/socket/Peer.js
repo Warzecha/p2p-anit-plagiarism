@@ -46,7 +46,9 @@ module.exports = class Peer {
             } else {
                 //pryszla pojdeyczna wiadomosc
                 broadcastMessage.network.forEach((value, index) => {
-                    this.currentNetworkPeers.push(new NetworkPeerInfo(value.peerId, value.peerAddress))
+                    if (!this.currentNetworkPeers.map(value1 => value1.peerId).includes(value.peerId)) {
+                        this.currentNetworkPeers.push(new NetworkPeerInfo(value.peerId, value.peerAddress))
+                    }
                 });
             }
 
