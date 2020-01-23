@@ -1,11 +1,11 @@
-import NetworkPeerInfo from "./NetworkPeerInfo";
-import BroadcastMessage from "./BroadcastMessage";
+const NetworkPeerInfo = require("./NetworkPeerInfo");
+const BroadcastMessage = require("./BroadcastMessage");
 
 const uuid = require('uuid/v1');
 const dgram = require('dgram');
 const PORT = 8080;
 
-class Peer {
+module.exports = class Peer {
     constructor(address, broadcastAddress) {
         this.peerId = uuid().toString();
         console.log(this.peerId);
@@ -43,5 +43,3 @@ class Peer {
     }
 
 }
-
-export default Peer;

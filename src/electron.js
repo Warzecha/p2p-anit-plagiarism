@@ -1,3 +1,7 @@
+const uuid = require('uuid');
+
+const Peer = require('./socket/Peer');
+
 const electron = require('electron');
 const {app, BrowserWindow, Tray, Menu, ipcMain} = electron;
 const axios = require('axios');
@@ -9,6 +13,7 @@ const pdf = require('pdf-parse');
 
 let mainWindow;
 let tray = null;
+let peer = null;
 
 function createWindow() {
     mainWindow = new BrowserWindow({
@@ -49,6 +54,24 @@ app.on('ready', () => {
     createTray();
 });
 
+ipcMain.on('connectToPearNetwork', ((event, args) => {
+    peer = new Peer("0.0.0.0", "0.0.0.0");
+    peer.bindPeer();
+
+    setTimeout(() => {
+        peer.broadcastMessage();
+
+        let customPeersList = [peer.peerId, uuid().toString(), uuid().toString()];
+
+        event.sender.send('connectToPearNetworkResponse', {
+            peerId: peer.peerId,
+            peersList: customPeersList
+        })
+
+    }, 2000);
+
+}));
+
 ipcMain.on('parseFile', ((event, args) => {
     const path = args.files[0].path;
     console.log(path);
@@ -68,8 +91,6 @@ ipcMain.on('parseFile', ((event, args) => {
     })
 
 }));
-
-
 
 
 const splitToArray = (formattedText, size) => {

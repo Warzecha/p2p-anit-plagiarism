@@ -13,7 +13,7 @@ const StartJobComponent = () => {
     const styles = useStyles();
 
     const [files, setFiles] = useState(new Map());
-    const [peersList, setPeersList] = useState(new Set());
+    const [peersList, setPeersList] = useState([]);
     const [selfId, setSelId] = useState(null);
 
     const handleFilesDropped = (newFiles) => {
@@ -46,11 +46,11 @@ const StartJobComponent = () => {
     };
 
     const fillPeersList = (peers) => {
-        let updatedSet = new Set(peersList);
+        let updatedList = [];
         Array.from(peers).forEach((peer) =>
-            updatedSet.add(peer)
+            updatedList.push(peer)
         );
-        setPeersList(updatedSet);
+        setPeersList(updatedList);
 
     };
 

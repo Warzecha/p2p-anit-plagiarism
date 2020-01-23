@@ -2,33 +2,24 @@ import React, {useState} from "react";
 import {makeStyles} from "@material-ui/core";
 import Button from "@material-ui/core/Button";
 import CircularProgress from '@material-ui/core/CircularProgress';
-import Peer from "../socket/Peer";
-const uuid = require('uuid/v1');
+const {ipcRenderer} = require('electron');
 
 const ConnectToPeerNetworkButton = (props) => {
     const styles = useStyles();
-    let peer = null;
 
     const [isConnected, setIsConnected] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleClick = () => {
-        peer = new Peer("0.0.0.0", "0.0.0.0");
-        peer.bindPeer();
-
+    ipcRenderer.on('connectToPearNetworkResponse', (event, args) => {
         setIsConnected(true);
-        setIsLoading(true);
-        setTimeout(() => {
-            setIsLoading(false);
-            peer.broadcastMessage();
-            props.attachSelfId(peer.peerId);
-            props.fillPeersList(customPeersList);
-        }, 2000);
+        setIsLoading(false);
+        props.attachSelfId(args.peerId);
+        props.fillPeersList(args.peersList);
+    });
 
-        let customPeersList = new Set();
-        customPeersList.add(peer.peerId);
-        customPeersList.add(uuid().toString());
-        customPeersList.add(uuid().toString());
+    const handleClick = () => {
+        setIsLoading(true);
+        ipcRenderer.send('connectToPearNetwork')
     };
 
     return (
