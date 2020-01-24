@@ -32,7 +32,7 @@ const getSearchResults = async (keyword) => {
         }
 
 
-        console.log(data)
+        console.log(data);
         return data;
 
     } catch (e) {

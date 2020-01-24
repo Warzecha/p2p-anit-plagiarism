@@ -3,6 +3,9 @@ const BroadcastMessage = require("./BroadcastMessage");
 const Job = require("./Job");
 const uuid = require('uuid/v1');
 const dgram = require('dgram');
+const {ValidationManager} = require("./../validator/ValidationManager");
+const {WikiDataStrategy} = require("./../validator/WikipediaSourceStrategy");
+
 const PORT = 8080;
 
 module.exports = class Peer {
@@ -16,6 +19,10 @@ module.exports = class Peer {
         this.currentNetworkPeers.push(new NetworkPeerInfo(this.peerId, address));
         this.window = window;
         this.activeJobs = [];
+        this.currentTask = null;
+
+        this.validationManager = new ValidationManager(WikiDataStrategy);
+
     }
 
     bindPeer() {
@@ -78,7 +85,11 @@ module.exports = class Peer {
 
         receivedMessage.activeJobs.forEach((value) => {
             if (!this.activeJobs.map(value1 => value1.jobId).includes(value.jobId)) {
-                this.activeJobs.push(new Job(value.jobId, value.arrayOfWords, value.arrayOfFinishedIndexes, value.finished, value.arrayOfInterestingWords))
+                this.activeJobs.push(new Job(value.jobId, value.arrayOfWords, value.finishedChunks, value.finished, value.arrayOfInterestingWords))
+            }
+
+            if (!this.currentTask) {
+                this.startTask();
             }
         });
 
@@ -90,7 +101,7 @@ module.exports = class Peer {
     handleJobUpdateMessage = (receivedMessage) => {
         this.activeJobs.forEach(value => {
             if (value.jobId === receivedMessage.jobUpdate.jobId) {
-                value.addNewFinishedIndex(receivedMessage.jobUpdate.finishedIndex);
+                value.addNewFinishedIndexes(receivedMessage.jobUpdate.finishedIndex.index, receivedMessage.jobUpdate.finishedIndex.size);
                 value.finished = receivedMessage.jobUpdate.finished
             }
         });
@@ -125,14 +136,14 @@ module.exports = class Peer {
         })
     };
 
-    updateJob = (jobId, finishedIndex) => {
+    updateJob = (jobId, finishedIndex, size) => {
         let updated = false;
         let isNowFinished = false;
         for (let i = 0; i < this.activeJobs.length; i++) {
             let job = this.activeJobs[i];
             if (job.jobId === jobId) {
-                if (!job.arrayOfFinishedIndexes.includes(finishedIndex)) {
-                    job.addNewFinishedIndex(finishedIndex);
+                if (!job.finishedChunks[size].includes(finishedIndex)) {
+                    job.addNewFinishedIndexes(finishedIndex, size);
                     updated = true;
                     isNowFinished = job.finished
                 }
@@ -145,7 +156,10 @@ module.exports = class Peer {
                 messageType: 'JOB_UPDATE',
                 jobUpdate: {
                     jobId: jobId,
-                    finishedIndex: finishedIndex,
+                    finishedIndex: {
+                        index: finishedIndex,
+                        size: size
+                    },
                     finished: isNowFinished
                 }
             }));
@@ -167,4 +181,55 @@ module.exports = class Peer {
         })
     }
 
+    findAvailableTask = () => {
+        let jobToDo = this.activeJobs.filter(value => !value.finished)[0];
+
+        let availableTasks = [];
+
+        Object.keys(jobToDo.finishedChunks).forEach(size => {
+
+            for (let i = 0; i < jobToDo.finishedChunks[size].length; i++) {
+                if (!jobToDo.finishedChunks[size].includes(i)) {
+                    availableTasks.push({
+                        index: i,
+                        size: size,
+                        jobId: jobToDo.jobId
+                    })
+                }
+            }
+        });
+
+        return availableTasks[getRandomInt(0, availableTasks.length)]
+    };
+
+    getTaskData = (wordsArray, size, index) => {
+        if (wordsArray.length <= size) {
+            return wordsArray
+        } else {
+            return wordsArray.slice(index, index + size)
+        }
+    };
+
+    startTask = async () => {
+        let task = this.findAvailableTask();
+        let job = this.activeJobs.filter(item => item.jobId === task.jobId)[0];
+
+        let taskWordsArray = this.getTaskData(job.arrayOfWords, task.size, task.index);
+
+        let results = await this.validationManager.validate(taskWordsArray, job.arrayOfInterestingWords);
+
+        console.log("Results: ", results)
+
+
+
+
+    }
+
 };
+
+
+function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
