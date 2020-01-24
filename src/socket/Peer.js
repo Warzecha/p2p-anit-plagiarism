@@ -1,7 +1,6 @@
 const NetworkPeerInfo = require("./NetworkPeerInfo");
 const BroadcastMessage = require("./BroadcastMessage");
 const Job = require("./Job");
-const {ipcMain} = require('electron');
 const uuid = require('uuid/v1');
 const dgram = require('dgram');
 const PORT = 8080;

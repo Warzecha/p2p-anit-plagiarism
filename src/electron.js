@@ -1,7 +1,7 @@
 const uuid = require('uuid');
 
 const Peer = require('./socket/Peer');
-
+const ifaces = require('os').networkInterfaces();
 const electron = require('electron');
 const {app, BrowserWindow, Tray, Menu, ipcMain} = electron;
 const axios = require('axios');
@@ -36,8 +36,29 @@ function createWindow() {
         mainWindow = null
     });
 
-    mainWindow.webContents.openDevTools()
+    mainWindow.webContents.openDevTools();
+
 }
+
+const getIpAndMask = () => {
+    let ip = null;
+    let mask = null;
+
+    Object.keys(ifaces).forEach(function (ifname) {
+
+        ifaces[ifname].forEach(function (iface) {
+            if (iface.family === 'IPv4' && !iface.internal) {
+                ip = iface.address;
+                mask = iface.netmask;
+            }
+        });
+    });
+
+    return {
+        ip: ip,
+        mask: mask
+    }
+};
 
 const createTray = () => {
     tray = new Tray('assets/cloud_icon.png');
@@ -54,9 +75,16 @@ app.on('ready', () => {
     createTray();
 });
 
-ipcMain.on('connectToPearNetwork', ((event, args) => {
+ipcMain.on('connectToPearNetwork', ((event) => {
+    const {ip, mask} = getIpAndMask();
+    let broadcast = ip.split('.');
+    console.log(broadcast);
+    let finalBroadCast = `${broadcast[0]}.${broadcast[1]}.${broadcast[2]}.255`;
 
-    peer = new Peer(args.selfAddress, args.broadcastAddress, mainWindow);
+    console.log(ip);
+    console.log(finalBroadCast);
+
+    peer = new Peer(ip, finalBroadCast, mainWindow);
     peer.bindPeer();
 
     setTimeout(() => {
@@ -70,6 +98,7 @@ ipcMain.on('connectToPearNetwork', ((event, args) => {
     }, 2000);
 
 }));
+
 
 // ipcMain.on('updatePeerNetwork', ((event, args) => {
 //
