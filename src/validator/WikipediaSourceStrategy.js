@@ -44,11 +44,7 @@ const getWikiContent = async (keyword) => {
             data.push({title, url, parsed})
         }
 
-
-        data.forEach(item => {
-            console.log("=============================");
-            console.log(item)
-        })
+        return data
 
     } catch (e) {
         console.log("Something went wrong", e)
@@ -57,5 +53,5 @@ const getWikiContent = async (keyword) => {
 
 };
 
-module.exports.wikiDataStrategy = new DataSourceStrategy(getWikiContent);
+module.exports.WikiDataStrategy = new DataSourceStrategy(getWikiContent);
 

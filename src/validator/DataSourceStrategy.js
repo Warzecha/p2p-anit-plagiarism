@@ -5,7 +5,7 @@ class DataSourceStrategy {
 
     }
 
-    getContent = function (keyword) {
+    getContent = async function (keyword) {
         return this.strategy(keyword)
     };
 
