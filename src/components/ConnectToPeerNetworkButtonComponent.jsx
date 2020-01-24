@@ -21,7 +21,6 @@ const ConnectToPeerNetworkButton = (props) => {
     });
 
     ipcRenderer.on('updatePeersNetwork', (event, args) => {
-        console.log(args);
         props.fillPeersList(args.currentNetworkPeers)
     });
 
