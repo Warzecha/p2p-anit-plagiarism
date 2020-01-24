@@ -52,10 +52,14 @@ module.exports = class Peer {
             }
         });
 
-        receivedMessage.activeJobs((value) => {
+        receivedMessage.activeJobs.forEach((value) => {
             if (!this.activeJobs.map(value1 => value1.jobId).includes(value.jobId)) {
                 this.activeJobs.push(new Job(value.jobId, value.arrayOfWords, value.arrayOfFinishedIndexes, value.finished,  value.arrayOfInterestingWords))
             }
+        });
+
+        this.window.webContents.send('updatePeersNetwork', {
+            currentNetworkPeers: this.currentNetworkPeers
         })
     };
 
