@@ -38,6 +38,7 @@ function createWindow() {
 
     mainWindow.webContents.openDevTools()
 }
+
 const createTray = () => {
     tray = new Tray('assets/cloud_icon.png');
     const contextMenu = Menu.buildFromTemplate([
@@ -74,21 +75,55 @@ ipcMain.on('connectToPearNetwork', ((event, args) => {
 //
 // }));
 
-ipcMain.on('parseFile', ((event, args) => {
-    const path = args.files[0].path;
-    console.log(path);
-    let dataBuffer = fs.readFileSync(path);
-    let text;
-    pdf(dataBuffer).then((data) => {
+ipcMain.on('parseFiles', ((event, args) => {
+    args.files.forEach((file) => {
+        const path = file.path;
+        console.log(path);
+        let dataBuffer = fs.readFileSync(path);
+        let text;
 
-        text = data.text.replace(/(^[ \t]*\n)/gm, "");
-        let formatted = text.split('.').map((split) => {
-            return split.replace(/\s+/g, " ");
-        }).join('').replace(/,/g, "");
-        // console.log(formatted);
-        // getWikiContent('transmitancja');
-        let array5 = splitToArray(formatted, 5);
-        let array25 = splitToArray(formatted, 25);
+        pdf(dataBuffer).then((data) => {
+
+            text = data.text.replace(/(^[ \t]*\n)/gm, "");
+            let formatted = text.split('.').map((split) => {
+                return split.replace(/\s+/g, " ");
+            }).join('').replace(/,/g, "").toLocaleLowerCase();
+            // console.log(formatted);
+            let formattedArray = formatted.split(' ');
+            let interestingArray = [];
+            for (let i = 0; i < formattedArray.length; i++) {
+                if (formattedArray[i].length > 4) {
+                    let numberOfOccurrences = 0;
+                    for (let j = 0; j < formattedArray.length - 1; j++) {
+                        if (formattedArray[i] === formattedArray[j]) {
+                            numberOfOccurrences++;
+                        }
+                    }
+
+                    if (interestingArray.length === 0) {
+                        interestingArray.push({
+                            word: formattedArray[i],
+                            numberOfOccurrences: numberOfOccurrences
+                        })
+                    } else if (!interestingArray.map(value => value.word).includes(formattedArray[i]) && interestingArray[0].numberOfOccurrences <= numberOfOccurrences) {
+                        interestingArray.unshift({
+                            word: formattedArray[i],
+                            numberOfOccurrences: numberOfOccurrences
+                        })
+                    }
+
+                    if (interestingArray.length > 5) {
+                        interestingArray.pop();
+                    }
+
+                }
+            }
+
+            console.log(interestingArray.map(value => value.word));
+            peer.createJob(formattedArray, interestingArray.map(value => value.word));
+            // let array5 = splitToArray(formatted, 5);
+            // let array25 = splitToArray(formatted, 25);
+        })
 
     })
 

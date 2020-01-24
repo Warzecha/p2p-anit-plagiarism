@@ -6,6 +6,7 @@ import FileListComponent from "./FileListComponent";
 import {Map} from 'immutable';
 import ConnectRoPeerNetworkButton from "./ConnectToPeerNetworkButtonComponent";
 import CurrentNetworkListComponent from "./CurrentNetworkListComponent";
+import Button from "@material-ui/core/Button";
 
 const {ipcRenderer} = require('electron');
 
@@ -22,23 +23,24 @@ const StartJobComponent = () => {
             updatedFiles = updatedFiles.set(newFile.path, newFile);
         });
         setFiles(updatedFiles);
-        parseFiles(newFiles)
     };
 
-    let parseFiles = (newFiles) => {
+    const handleClick = () => {
+        console.log('Sending');
 
         let data = {
             files: []
         };
 
-        Array.from(newFiles).map((file) => {
+        files.toIndexedSeq().forEach(((value) => {
             data.files.push({
-                'path': file.path,
-                'name': file.name
+                name: value.name,
+                path: value.path
             })
-        });
+        }));
 
-        ipcRenderer.send('parseFile', data);
+        console.log(data);
+        ipcRenderer.send('parseFiles', data);
     };
 
     const handleFileDeleted = (file) => {
@@ -70,6 +72,9 @@ const StartJobComponent = () => {
                 <DragAndDropComponent files={files} onFilesDropped={handleFilesDropped}/>
                 <FileListComponent files={files} onFileDeleted={handleFileDeleted}/>
             </div>
+            {files.size !==0 && <Button className={styles.button} variant={"contained"} onClick={handleClick} disabled={selfId == null}>
+                Apply
+            </Button>}
 
         </div>
     );
@@ -100,7 +105,10 @@ const useStyles = makeStyles(() => ({
         flexDirection: 'column',
         float: 'right',
         width: '30%'
-    }
+    },
+    button: {
+        align: 'center'
+    },
 
 }));
 

@@ -23,6 +23,31 @@ module.exports = class Peer {
         this.socket.bind(PORT)
     }
 
+    createJob(arrayOfWords, arrayOfInterestingWords) {
+        let job = new Job(uuid(), arrayOfWords, [], false, arrayOfInterestingWords);
+        this.socket.setBroadcast(false);
+        const newJobMessageString = new Buffer(JSON.stringify({
+            messageType: 'NEW_JOB',
+            job: job
+        }));
+
+        this.currentNetworkPeers.forEach(value => {
+            this.socket.send(newJobMessageString, 0, newJobMessageString.length, PORT, value.peerAddress, () => {
+                console.log("Sending new job to: " + value.peerId + " for job: " + job.jobId)
+            })
+        });
+
+        this.activeJobs.push(job);
+
+    };
+
+    handleNewJobMessage = (receivedMessage) => {
+        const receivedJob = receivedMessage.job;
+        if (!this.activeJobs.map(value => value.jobId).includes(receivedJob.jobId)) {
+            this.activeJobs.push(receivedJob);
+        }
+    };
+
     handleBroadcastMessage = (receivedMessage, remoteInfo) => {
         if (receivedMessage.peerId === this.peerId) {
             console.log(`Broadcast received from self: ${this.peerId}`)
@@ -54,7 +79,7 @@ module.exports = class Peer {
 
         receivedMessage.activeJobs.forEach((value) => {
             if (!this.activeJobs.map(value1 => value1.jobId).includes(value.jobId)) {
-                this.activeJobs.push(new Job(value.jobId, value.arrayOfWords, value.arrayOfFinishedIndexes, value.finished,  value.arrayOfInterestingWords))
+                this.activeJobs.push(new Job(value.jobId, value.arrayOfWords, value.arrayOfFinishedIndexes, value.finished, value.arrayOfInterestingWords))
             }
         });
 
@@ -81,13 +106,20 @@ module.exports = class Peer {
             receivedMessage = JSON.parse(receivedMessage);
             const messageType = receivedMessage.messageType;
             switch (messageType) {
-                case "BROADCAST": this.handleBroadcastMessage(receivedMessage, remoteInfo);
-                break;
-                case "NETWORK_MESSAGE": this.handleNetworkInfoMessage(receivedMessage);
-                break;
-                case "JOB_UPDATE": this.handleJobUpdateMessage(receivedMessage);
-                break;
-                default: return;
+                case "BROADCAST":
+                    this.handleBroadcastMessage(receivedMessage, remoteInfo);
+                    break;
+                case "NETWORK_MESSAGE":
+                    this.handleNetworkInfoMessage(receivedMessage);
+                    break;
+                case "JOB_UPDATE":
+                    this.handleJobUpdateMessage(receivedMessage);
+                    break;
+                case "NEW_JOB":
+                    this.handleNewJobMessage(receivedMessage);
+                    break;
+                default:
+                    return;
             }
 
 
@@ -108,7 +140,7 @@ module.exports = class Peer {
             }
         }
 
-        if(updated) {
+        if (updated) {
             this.socket.setBroadcast(false);
             const jobUpdateMessageString = new Buffer(JSON.stringify({
                 messageType: 'JOB_UPDATE',
