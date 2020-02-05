@@ -64,6 +64,7 @@ module.exports = class Peer {
             console.log(`Broadcast received from self: ${this.peerId}`)
         } else {
             console.log(`New message from ${remoteInfo.address}:${remoteInfo.port} with id: ${receivedMessage.peerId}`);
+            this.currentNetworkPeers = this.currentNetworkPeers.filter(peer => peer.address !== remoteInfo.address);
             this.currentNetworkPeers.push(new NetworkPeerInfo(receivedMessage.peerId, remoteInfo.address));
             this.socket.setBroadcast(false);
             let networkMessage = new Buffer(JSON.stringify({
