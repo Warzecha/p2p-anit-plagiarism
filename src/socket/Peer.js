@@ -47,11 +47,12 @@ module.exports = class Peer {
 
     };
 
+
     handleNewJobMessage = async (receivedMessage) => {
         const receivedJob = receivedMessage.job;
         console.log("Received new job: ", receivedJob.jobId);
         if (!this.activeJobs.map(value => value.jobId).includes(receivedJob.jobId)) {
-            this.activeJobs.push(receivedJob);
+            this.activeJobs.push(new Job(receivedJob.jobId, receivedJob.arrayOfWords, receivedJob.finishedChunks, receivedJob.finished, receivedJob.arrayOfInterestingWords));
         }
         if (!this.currentTask) {
             await this.startTask();
@@ -92,9 +93,6 @@ module.exports = class Peer {
                 this.activeJobs.push(new Job(receivedJob.jobId, receivedJob.arrayOfWords, receivedJob.finishedChunks, receivedJob.finished, receivedJob.arrayOfInterestingWords))
             }
 
-            // if (!this.currentTask) {
-            //     await this.startTask();
-            // }
         });
 
         this.window.webContents.send('updatePeersNetwork', {
@@ -103,8 +101,10 @@ module.exports = class Peer {
     };
 
     handleJobUpdateMessage = (receivedMessage) => {
+        console.log("Received job update for job: " + receivedMessage.jobUpdate.jobId);
         this.activeJobs.forEach(job => {
             if (job.jobId === receivedMessage.jobUpdate.jobId) {
+                console.log("HERE", job);
                 job.addNewFinishedIndexes(receivedMessage.jobUpdate.finishedIndex.index, receivedMessage.jobUpdate.finishedIndex.size, receivedMessage.results);
                 job.finished = receivedMessage.jobUpdate.finished
             }
@@ -147,6 +147,7 @@ module.exports = class Peer {
         for (let i = 0; i < this.activeJobs.length; i++) {
             let job = this.activeJobs[i];
             if (job.jobId === jobId) {
+                console.log("HERE", job);
                 job.addNewFinishedIndexes(finishedIndex, size, results);
                 updated = true;
                 isNowFinished = job.finished
