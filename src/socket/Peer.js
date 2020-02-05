@@ -104,9 +104,8 @@ module.exports = class Peer {
         console.log("Received job update for job: " + receivedMessage.jobUpdate.jobId);
         this.activeJobs.forEach(job => {
             if (job.jobId === receivedMessage.jobUpdate.jobId) {
-                console.log("HERE", job);
                 job.addNewFinishedIndexes(receivedMessage.jobUpdate.finishedIndex.index, receivedMessage.jobUpdate.finishedIndex.size, receivedMessage.results);
-                job.finished = receivedMessage.jobUpdate.finished
+                job.finished = job.finished ? true : receivedMessage.jobUpdate.finished;
             }
         });
     };
@@ -147,7 +146,6 @@ module.exports = class Peer {
         for (let i = 0; i < this.activeJobs.length; i++) {
             let job = this.activeJobs[i];
             if (job.jobId === jobId) {
-                console.log("HERE", job);
                 job.addNewFinishedIndexes(finishedIndex, size, results);
                 updated = true;
                 isNowFinished = job.finished
@@ -192,23 +190,25 @@ module.exports = class Peer {
 
     findAvailableTask = () => {
         let jobToDo = this.activeJobs.filter(value => !value.finished)[0];
+        if (jobToDo) {
 
-        let availableTasks = [];
+            let availableTasks = [];
 
-        Object.keys(jobToDo.finishedChunks).forEach(size => {
-            for (let i = 0; i < jobToDo.arrayOfWords.length - size + 1; i++) {
-                if (!jobToDo.finishedChunks[size].includes(i)) {
-                    availableTasks.push({
-                        index: i,
-                        size: size,
-                        jobId: jobToDo.jobId
-                    })
+            Object.keys(jobToDo.finishedChunks).forEach(size => {
+                for (let i = 0; i < jobToDo.arrayOfWords.length - size + 1; i++) {
+                    if (!jobToDo.finishedChunks[size].includes(i)) {
+                        availableTasks.push({
+                            index: i,
+                            size: size,
+                            jobId: jobToDo.jobId
+                        })
+                    }
                 }
-            }
-        });
+            });
 
-        console.log("Available tasks left: ", availableTasks);
-        return availableTasks[getRandomInt(0, availableTasks.length-1)]
+            console.log("Available tasks left: ", availableTasks);
+            return availableTasks[getRandomInt(0, availableTasks.length - 1)]
+        }
     };
 
     getTaskData = (wordsArray, size, index) => {
@@ -221,8 +221,8 @@ module.exports = class Peer {
 
     startTask = async () => {
         let task = this.findAvailableTask();
-        console.log("Found task:", {i: task.index, s: task.size});
         if (task) {
+            console.log("Found task:", {i: task.index, s: task.size});
             this.currentTask = task;
             let job = this.activeJobs.filter(item => item.jobId === task.jobId)[0];
             let taskWordsArray = this.getTaskData(job.arrayOfWords, task.size, task.index);
