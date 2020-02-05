@@ -26,7 +26,7 @@ const FileListComponent = (props) => {
                 <IconButton edge="end" aria-label="delete"
                             onClick={() => props.onFileDeleted(file)}
                 >
-                    <DeleteIcon />
+                    <DeleteIcon/>
                 </IconButton>
             </ListItemSecondaryAction>
         </ListItem>));

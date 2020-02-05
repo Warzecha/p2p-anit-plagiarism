@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {makeStyles} from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
 import DragAndDropComponent from "./DragAndDropComponent";
@@ -6,21 +6,44 @@ import FileListComponent from "./FileListComponent";
 import {Map} from 'immutable';
 import ConnectRoPeerNetworkButton from "./ConnectToPeerNetworkButtonComponent";
 import CurrentNetworkListComponent from "./CurrentNetworkListComponent";
+import Button from "@material-ui/core/Button";
+
+const {ipcRenderer} = require('electron');
 
 const StartJobComponent = () => {
     const styles = useStyles();
 
     const [files, setFiles] = useState(new Map());
-    const [peersList, setPeersList] = useState(new Set());
+    const [peersList, setPeersList] = useState([]);
     const [selfId, setSelId] = useState(null);
 
+    useEffect(() => {
+        document.title = 'P2P Anti Plagiarism App'
+    }, []);
+
     const handleFilesDropped = (newFiles) => {
-        console.log(newFiles);
         let updatedFiles = files;
         Array.from(newFiles).forEach((newFile) => {
             updatedFiles = updatedFiles.set(newFile.path, newFile);
         });
-        setFiles(updatedFiles)
+        setFiles(updatedFiles);
+    };
+
+    const handleClick = () => {
+        console.log('Sending');
+
+        let data = {
+            files: []
+        };
+        files.toIndexedSeq().forEach(((value) => {
+            data.files.push({
+                name: value.name,
+                path: value.path
+            })
+        }));
+
+        console.log(data);
+        ipcRenderer.send('parseFiles', data);
     };
 
     const handleFileDeleted = (file) => {
@@ -28,11 +51,12 @@ const StartJobComponent = () => {
     };
 
     const fillPeersList = (peers) => {
-        let updatedSet = new Set(peersList);
+        let updatedList = [];
         Array.from(peers).forEach((peer) =>
-            updatedSet.add(peer)
+            updatedList.push(peer)
         );
-        setPeersList(updatedSet);
+        setPeersList(updatedList);
+
     };
 
     const attachSelfId = (peerId) => {
@@ -43,13 +67,17 @@ const StartJobComponent = () => {
         <div className={styles.root}>
             <Typography className={styles.heading} variant="h1" align="center">Start job</Typography>
             <div className={styles.networkList}>
-                <ConnectRoPeerNetworkButton peersList={peersList} fillPeersList={fillPeersList} attachSelfId={attachSelfId}/>
+                <ConnectRoPeerNetworkButton peersList={peersList} fillPeersList={fillPeersList}
+                                            attachSelfId={attachSelfId}/>
                 <CurrentNetworkListComponent peersList={peersList} selfId={selfId}/>
             </div>
             <div className={styles.fileInputContainer}>
                 <DragAndDropComponent files={files} onFilesDropped={handleFilesDropped}/>
                 <FileListComponent files={files} onFileDeleted={handleFileDeleted}/>
             </div>
+            {files.size !==0 && <Button className={styles.button} variant={"contained"} onClick={handleClick} disabled={selfId == null}>
+                Apply
+            </Button>}
 
         </div>
     );
@@ -80,7 +108,10 @@ const useStyles = makeStyles(() => ({
         flexDirection: 'column',
         float: 'right',
         width: '30%'
-    }
+    },
+    button: {
+        align: 'center'
+    },
 
 }));
 

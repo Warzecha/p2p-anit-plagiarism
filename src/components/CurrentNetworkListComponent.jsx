@@ -16,10 +16,10 @@ const CurrentNetworkListComponent = (props) => {
     const getFileList = () => Array.from(peersList).map((peer, index) => (
         <ListItem key={index}>
             <ListItemIcon>
-                {peer === selfId ? <AccountBoxIcon/> : <ComputerIcon/>}
+                {peer.peerId === selfId ? <AccountBoxIcon/> : <ComputerIcon/>}
             </ListItemIcon>
             <ListItemText
-                primary={peer === selfId ? "This machine" : `${peer.slice(0, 3)}...${peer.slice(peer.length - 4, peer.length - 1)}`}/>
+                primary={peer.peerId === selfId ? "This machine" : `${peer.peerId.slice(0, 3)}...${peer.peerId.slice(peer.peerId.length - 4, peer.peerId.length - 1)}`}/>
         </ListItem>));
 
 

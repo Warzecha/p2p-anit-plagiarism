@@ -1,42 +1,37 @@
 import React, {useState} from "react";
-import {makeStyles} from "@material-ui/core";
+import {makeStyles, TextField} from "@material-ui/core";
 import Button from "@material-ui/core/Button";
 import CircularProgress from '@material-ui/core/CircularProgress';
-import Peer from "../socket/Peer";
 
-const uuid = require('uuid/v1');
+const {ipcRenderer} = require('electron');
 
 const ConnectToPeerNetworkButton = (props) => {
     const styles = useStyles();
-    let peer = null;
-
     const [isConnected, setIsConnected] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleClick = () => {
-        peer = new Peer("0.0.0.0", "0.0.0.0");
-        peer.bindPeer();
-
+    ipcRenderer.on('connectToPearNetworkResponse', (event, args) => {
         setIsConnected(true);
+        setIsLoading(false);
+        props.attachSelfId(args.peerId);
+    });
+
+    ipcRenderer.on('updatePeersNetwork', (event, args) => {
+        props.fillPeersList(args.currentNetworkPeers)
+    });
+
+    const handleClick = () => {
         setIsLoading(true);
-        setTimeout(() => {
-            setIsLoading(false);
-            peer.broadcastMessage();
-            props.attachSelfId(peer.peerId);
-            props.fillPeersList(customPeersList);
-        }, 2000);
-
-        let customPeersList = new Set();
-        customPeersList.add(peer.peerId);
-        customPeersList.add(uuid().toString());
-        customPeersList.add(uuid().toString());
-
+        ipcRenderer.send('connectToPearNetwork')
     };
 
     return (
         <div className={styles.root}>
-            <Button disabled={isConnected} variant={"contained"} onClick={handleClick}>Connect</Button>
-            {isLoading && <CircularProgress className={styles.progress}></CircularProgress>}
+            <Button style={{
+                marginTop: '10px'
+            }} disabled={isConnected} variant={"contained"}
+                    onClick={handleClick}>Connect</Button>
+            {isLoading && <CircularProgress className={styles.progress}/>}
         </div>
     )
 

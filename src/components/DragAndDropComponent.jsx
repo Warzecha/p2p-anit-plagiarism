@@ -9,11 +9,9 @@ const DragAndDropComponent = (props) => {
     const [isDragging, setIsDragging] = useState(false);
     const [dragCounter, setDragCounter] = useState(0);
 
-
     const styles = useStyles();
 
     useEffect(() => {
-
 
         let div = dropElement.current;
         div.addEventListener('dragenter', handleDragIn);
