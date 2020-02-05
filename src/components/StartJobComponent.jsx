@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {makeStyles} from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
 import DragAndDropComponent from "./DragAndDropComponent";
@@ -17,6 +17,10 @@ const StartJobComponent = () => {
     const [peersList, setPeersList] = useState([]);
     const [selfId, setSelId] = useState(null);
 
+    useEffect(() => {
+        document.title = 'P2P Anti Plagiarism App'
+    }, []);
+
     const handleFilesDropped = (newFiles) => {
         let updatedFiles = files;
         Array.from(newFiles).forEach((newFile) => {
@@ -31,7 +35,6 @@ const StartJobComponent = () => {
         let data = {
             files: []
         };
-
         files.toIndexedSeq().forEach(((value) => {
             data.files.push({
                 name: value.name,

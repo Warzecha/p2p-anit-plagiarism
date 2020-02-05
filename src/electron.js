@@ -19,6 +19,7 @@ function createWindow() {
     mainWindow = new BrowserWindow({
         width: 800,
         height: 600,
+        title: "P2P - Anti Plagiarism App",
         webPreferences: {
             nodeIntegration: true,
             // devTools: true
@@ -172,7 +173,6 @@ const splitToArray = (formattedText, size) => {
         return array;
     }
 };
-
 
 
 // app.on('window-all-closed', () => {
