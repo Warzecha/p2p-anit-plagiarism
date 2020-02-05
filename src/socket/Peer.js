@@ -104,7 +104,7 @@ module.exports = class Peer {
     handleJobUpdateMessage = (receivedMessage) => {
         console.log("Received job update for job: " + receivedMessage.jobUpdate.jobId);
         this.activeJobs.forEach(job => {
-            if (job.jobId === receivedMessage.jobUpdate.jobId) {
+            if (job.jobId === receivedMessage.jobUpdate.jobId && !job.finished) {
                 job.addNewFinishedIndexes(receivedMessage.jobUpdate.finishedIndex.index, receivedMessage.jobUpdate.finishedIndex.size, receivedMessage.results);
                 job.finished = job.finished ? true : receivedMessage.jobUpdate.finished;
             }
