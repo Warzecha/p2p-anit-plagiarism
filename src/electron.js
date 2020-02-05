@@ -21,7 +21,7 @@ function createWindow() {
         height: 600,
         webPreferences: {
             nodeIntegration: true,
-            devTools: true
+            // devTools: true
         },
 
     });
@@ -36,7 +36,7 @@ function createWindow() {
         mainWindow = null
     });
 
-    mainWindow.webContents.openDevTools();
+    // mainWindow.webContents.openDevTools();
 
 }
 
@@ -73,6 +73,7 @@ const createTray = () => {
 
 app.on('ready', () => {
     createTray();
+    createWindow();
 });
 
 ipcMain.on('connectToPearNetwork', ((event) => {

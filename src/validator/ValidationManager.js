@@ -1,6 +1,5 @@
 const levenshtein = require('js-levenshtein');
 
-
 const SCORE_THRESHOLD = 0.2;
 
 function ValidationManager(strategy) {
@@ -23,40 +22,56 @@ function ValidationManager(strategy) {
 
         let similarResults = [];
 
+        wordsArray = wordsArray.slice()
+
+        // console.log("keywords", keywords);
+        // console.log("words", wordsArray);
+
+
         let content;
         for (const keyword of keywords) {
-            content = await this.fetchContent(keyword)
-        }
+            try {
+                content = await this.fetchContent(keyword);
 
-        let contentText = content[0].parsed.split(' ');
+                // console.log("keyword", keyword);
 
-        for (let i = 0; i < contentText.length - sectionLength; i++) {
 
-            let subarray = contentText.slice(i, i + sectionLength);
-            // console.log("WIKI", subarray)
+                let contentText = content[0].parsed.split(' ');
+                // console.log("WIKI", contentText);
 
-            let sectionScore = 0;
 
-            for (let j = 0; j < sectionLength; j++) {
+                for (let i = 0; i < contentText.length - sectionLength; i++) {
 
-                if (wordsArray[j] && subarray[j]) {
-                    let relativeDistance = levenshtein(wordsArray[j], subarray[j]) / wordsArray[j].length;
-                    if (relativeDistance < SCORE_THRESHOLD) {
-                        sectionScore++;
+                    let subarray = contentText.slice(i, i + sectionLength);
+                    // console.log("WIKI", subarray)
+
+                    let sectionScore = 0;
+
+                    for (let j = 0; j < sectionLength; j++) {
+
+                        if (wordsArray[j] && subarray[j]) {
+                            let relativeDistance = levenshtein(wordsArray[j], subarray[j]) / wordsArray[j].length;
+                            if (relativeDistance < SCORE_THRESHOLD) {
+                                sectionScore++;
+                            }
+                        }
                     }
+
+
+                    if (sectionScore >= wordsArray.length * 0.8) {
+                        console.log(`Word: ${wordsArray} and ${subarray} - Score: ${sectionScore}`);
+                        similarResults.push({
+                            text: wordsArray.join(' '),
+                            original: subarray.join(' '),
+                            similrityScore: sectionScore
+                        })
+                    }
+
                 }
+            } catch (e) {
+
+                console.error(`For keyword ${keyword}`, e)
             }
-
-
-            if (sectionScore >= wordsArray.length * 0.8) {
-                console.log(`Word: ${wordsArray} and ${subarray} - Score: ${sectionScore}`);
-                similarResults.push({
-                    text: wordsArray.join(' '),
-                    original: subarray.join(' '),
-                    similrityScore: sectionScore
-                })
-            }
-
         }
 
         return similarResults;

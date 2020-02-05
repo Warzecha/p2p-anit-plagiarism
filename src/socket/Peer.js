@@ -30,16 +30,16 @@ module.exports = class Peer {
     }
 
     createJob(arrayOfWords, arrayOfInterestingWords) {
-        let job = new Job(uuid(), arrayOfWords, [], false, arrayOfInterestingWords);
+        let job = new Job(uuid(), arrayOfWords, {5: [], 25: []}, false, arrayOfInterestingWords);
         this.socket.setBroadcast(false);
         const newJobMessageString = new Buffer(JSON.stringify({
             messageType: 'NEW_JOB',
             job: job
         }));
 
-        this.currentNetworkPeers.forEach(value => {
-            this.socket.send(newJobMessageString, 0, newJobMessageString.length, PORT, value.peerAddress, () => {
-                console.log("Sending new job to: " + value.peerId + " for job: " + job.jobId)
+        this.currentNetworkPeers.forEach(peer => {
+            this.socket.send(newJobMessageString, 0, newJobMessageString.length, PORT, peer.peerAddress, () => {
+                console.log("Sending new job to: " + peer.peerId + " for job: " + job.jobId)
             })
         });
 
@@ -47,10 +47,14 @@ module.exports = class Peer {
 
     };
 
-    handleNewJobMessage = (receivedMessage) => {
+    handleNewJobMessage = async (receivedMessage) => {
         const receivedJob = receivedMessage.job;
+        console.log("Received new job: ", receivedJob.jobId);
         if (!this.activeJobs.map(value => value.jobId).includes(receivedJob.jobId)) {
             this.activeJobs.push(receivedJob);
+        }
+        if (!this.currentTask) {
+            await this.startTask();
         }
     };
 
@@ -83,14 +87,14 @@ module.exports = class Peer {
             }
         });
 
-        receivedMessage.activeJobs.forEach((value) => {
-            if (!this.activeJobs.map(value1 => value1.jobId).includes(value.jobId)) {
-                this.activeJobs.push(new Job(value.jobId, value.arrayOfWords, value.finishedChunks, value.finished, value.arrayOfInterestingWords))
+        receivedMessage.activeJobs.forEach(async (receivedJob) => {
+            if (!this.activeJobs.map(j => j.jobId).includes(receivedJob.jobId)) {
+                this.activeJobs.push(new Job(receivedJob.jobId, receivedJob.arrayOfWords, receivedJob.finishedChunks, receivedJob.finished, receivedJob.arrayOfInterestingWords))
             }
 
-            if (!this.currentTask) {
-                this.startTask();
-            }
+            // if (!this.currentTask) {
+            //     await this.startTask();
+            // }
         });
 
         this.window.webContents.send('updatePeersNetwork', {
@@ -99,10 +103,10 @@ module.exports = class Peer {
     };
 
     handleJobUpdateMessage = (receivedMessage) => {
-        this.activeJobs.forEach(value => {
-            if (value.jobId === receivedMessage.jobUpdate.jobId) {
-                value.addNewFinishedIndexes(receivedMessage.jobUpdate.finishedIndex.index, receivedMessage.jobUpdate.finishedIndex.size);
-                value.finished = receivedMessage.jobUpdate.finished
+        this.activeJobs.forEach(job => {
+            if (job.jobId === receivedMessage.jobUpdate.jobId) {
+                job.addNewFinishedIndexes(receivedMessage.jobUpdate.finishedIndex.index, receivedMessage.jobUpdate.finishedIndex.size, receivedMessage.results);
+                job.finished = receivedMessage.jobUpdate.finished
             }
         });
     };
@@ -112,7 +116,7 @@ module.exports = class Peer {
             console.log("Listening for broadcast message")
         });
 
-        this.socket.on('message', (receivedMessage, remoteInfo) => {
+        this.socket.on('message', async (receivedMessage, remoteInfo) => {
             receivedMessage = JSON.parse(receivedMessage);
             const messageType = receivedMessage.messageType;
             switch (messageType) {
@@ -126,7 +130,7 @@ module.exports = class Peer {
                     this.handleJobUpdateMessage(receivedMessage);
                     break;
                 case "NEW_JOB":
-                    this.handleNewJobMessage(receivedMessage);
+                    await this.handleNewJobMessage(receivedMessage);
                     break;
                 default:
                     return;
@@ -136,17 +140,16 @@ module.exports = class Peer {
         })
     };
 
-    updateJob = (jobId, finishedIndex, size) => {
+    updateJob = async (jobId, finishedIndex, size, results) => {
+        this.currentTask = null;
         let updated = false;
         let isNowFinished = false;
         for (let i = 0; i < this.activeJobs.length; i++) {
             let job = this.activeJobs[i];
             if (job.jobId === jobId) {
-                if (!job.finishedChunks[size].includes(finishedIndex)) {
-                    job.addNewFinishedIndexes(finishedIndex, size);
-                    updated = true;
-                    isNowFinished = job.finished
-                }
+                job.addNewFinishedIndexes(finishedIndex, size, results);
+                updated = true;
+                isNowFinished = job.finished
             }
         }
 
@@ -160,16 +163,21 @@ module.exports = class Peer {
                         index: finishedIndex,
                         size: size
                     },
+                    results: results,
                     finished: isNowFinished
                 }
             }));
 
-            this.currentNetworkPeers.forEach(value => {
-                this.socket.send(jobUpdateMessageString, 0, jobUpdateMessageString.length, PORT, value.peerAddress, () => {
-                    console.log("Sending job update to: " + value.peerId + " for job: " + jobId)
-                })
-            })
+            for (let peer of this.currentNetworkPeers) {
+                if (peer.peerId !== this.peerId) {
+                    await this.socket.send(jobUpdateMessageString, 0, jobUpdateMessageString.length, PORT, peer.peerAddress, () => {
+                        console.log("Sending job update to: " + peer.peerId + " for job: " + jobId)
+                    })
+                }
+            }
         }
+
+        await this.startTask();
 
     };
 
@@ -187,8 +195,7 @@ module.exports = class Peer {
         let availableTasks = [];
 
         Object.keys(jobToDo.finishedChunks).forEach(size => {
-
-            for (let i = 0; i < jobToDo.finishedChunks[size].length; i++) {
+            for (let i = 0; i < jobToDo.arrayOfWords.length - size + 1; i++) {
                 if (!jobToDo.finishedChunks[size].includes(i)) {
                     availableTasks.push({
                         index: i,
@@ -199,29 +206,29 @@ module.exports = class Peer {
             }
         });
 
-        return availableTasks[getRandomInt(0, availableTasks.length)]
+        console.log("Available tasks left: ", availableTasks);
+        return availableTasks[getRandomInt(0, availableTasks.length-1)]
     };
 
     getTaskData = (wordsArray, size, index) => {
         if (wordsArray.length <= size) {
             return wordsArray
         } else {
-            return wordsArray.slice(index, index + size)
+            return wordsArray.slice(parseInt(index), parseInt(index) + parseInt(size));
         }
     };
 
     startTask = async () => {
         let task = this.findAvailableTask();
-        let job = this.activeJobs.filter(item => item.jobId === task.jobId)[0];
-
-        let taskWordsArray = this.getTaskData(job.arrayOfWords, task.size, task.index);
-
-        let results = await this.validationManager.validate(taskWordsArray, job.arrayOfInterestingWords);
-
-        console.log("Results: ", results)
-
-
-
+        console.log("Found task:", {i: task.index, s: task.size});
+        if (task) {
+            this.currentTask = task;
+            let job = this.activeJobs.filter(item => item.jobId === task.jobId)[0];
+            let taskWordsArray = this.getTaskData(job.arrayOfWords, task.size, task.index);
+            let results = await this.validationManager.validate(taskWordsArray, job.arrayOfInterestingWords);
+            console.log("Results: ", results);
+            await this.updateJob(job.jobId, task.index, task.size, results);
+        }
 
     }
 
