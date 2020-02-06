@@ -17,7 +17,6 @@ module.exports = class ConnectionFacade {
         this.onJobUpdateMessage = onJobUpdateMessage;
         this.onNetworkInfoMessage = onNetworkInfoMessage;
         this.onNewJobMessage = onNewJobMessage;
-
     }
 
     bindPeer() {
@@ -49,8 +48,8 @@ module.exports = class ConnectionFacade {
     };
 
     handleBroadcastMessage = (receivedMessage, remoteInfo) => {
-        if (receivedMessage.peerId === this.peerId) {
-            console.log(`Broadcast received from self: ${this.peerId}`)
+        if (receivedMessage.peerId === this.peer.peerId) {
+            console.log(`Broadcast received from self: ${this.peer.peerId}`)
         } else {
             console.log(`New message from ${remoteInfo.address}:${remoteInfo.port} with id: ${receivedMessage.peerId}`);
             this.currentNetworkPeers = this.currentNetworkPeers.filter(peer => peer.address !== remoteInfo.address);
