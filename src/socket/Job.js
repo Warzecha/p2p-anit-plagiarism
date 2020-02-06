@@ -14,7 +14,7 @@ module.exports = class Job {
 
     addNewFinishedIndexes = (index, size, results) => {
 
-        if (!this.finishedChunks[size].includes(index)) {
+        if (!this.finishedChunks[size].includes(index) && !this.finished) {
             this.finishedChunks[size].push(index);
             this.totalResults = this.totalResults.concat(results);
 

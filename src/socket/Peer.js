@@ -203,7 +203,6 @@ module.exports = class Peer {
             let results = await this.validationManager.validate(taskWordsArray, job.arrayOfInterestingWords);
             console.log("Results: ", results);
 
-
             this.window.webContents.send('jobFinished', {
                 job: job,
                 results: results
