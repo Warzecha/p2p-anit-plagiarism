@@ -54,6 +54,10 @@ module.exports = class Job {
                     progress: currentValue / targetValue,
                 };
             }
+        } else {
+            return {
+                finished: false
+            }
         }
 
     };

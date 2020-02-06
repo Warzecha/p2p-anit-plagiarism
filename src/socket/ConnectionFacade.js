@@ -102,7 +102,6 @@ module.exports = class ConnectionFacade {
                     return;
             }
 
-
         })
     };
 
