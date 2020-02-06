@@ -4,7 +4,6 @@ import Typography from "@material-ui/core/Typography";
 import DragAndDropComponent from "./DragAndDropComponent";
 import FileListComponent from "./FileListComponent";
 import {Map} from 'immutable';
-import ConnectRoPeerNetworkButton from "./ConnectToPeerNetworkButtonComponent";
 import CurrentNetworkListComponent from "./CurrentNetworkListComponent";
 import Button from "@material-ui/core/Button";
 import ActiveJobsComponent from "../activeJobs/ActiveJobsComponent";
@@ -77,11 +76,8 @@ const StartJobComponent = () => {
                     </Button>}
                 </div>
 
-                <div className={styles.networkList}>
-                    <ConnectRoPeerNetworkButton peersList={peersList} fillPeersList={fillPeersList}
-                                                attachSelfId={attachSelfId}/>
-                    <CurrentNetworkListComponent peersList={peersList} selfId={selfId}/>
-                </div>
+                <CurrentNetworkListComponent peersList={peersList} selfId={selfId} fillPeersList={fillPeersList}
+                                             attachSelfId={attachSelfId} className={styles.networkList}/>
             </div>
 
 
@@ -111,6 +107,8 @@ const useStyles = makeStyles(() => ({
     networkList: {
         flex: 1,
         flexDirection: 'column',
+        alignItems: 'center',
+        justifyItems: 'center'
     },
     button: {
         align: 'center'

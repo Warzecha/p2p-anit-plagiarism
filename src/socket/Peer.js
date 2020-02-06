@@ -37,10 +37,12 @@ module.exports = class Peer {
 
     emitJobProgressEvent(job, progressEvent) {
         console.log("emitJobProgressEvent");
-        this.window.webContents.send('jobProgressEvent', {
-            job: job,
-            progressEvent: progressEvent
-        })
+        if (progressEvent.finished) {
+            this.window.webContents.send('jobProgressEvent', {
+                job: job,
+                progressEvent: progressEvent
+            })
+        }
     }
 
     createJob(arrayOfWords, arrayOfInterestingWords) {

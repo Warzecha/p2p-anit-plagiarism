@@ -2,52 +2,47 @@ import React, {useState} from 'react';
 import {makeStyles} from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
 import {Map} from 'immutable';
-import ListItem from "@material-ui/core/ListItem";
-import ListItemText from "@material-ui/core/ListItemText";
-import List from "@material-ui/core/List";
 import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 import TableCell from "@material-ui/core/TableCell";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
+import DoneIcon from '@material-ui/icons/Done';
+import CircularProgress from '@material-ui/core/CircularProgress';
 
 const {ipcRenderer} = require('electron');
 
-
-const ActiveJob = (props) => {
-    const {job} = props;
-    return (
-        <TableRow>
-            <TableCell component="th" scope="row">
-                {job.jobId}
-            </TableCell>
-            <TableCell align="right">{`${Math.floor(job.progress * 100)}%`}</TableCell>
-            <TableCell align="right">{'-'}</TableCell>
-        </TableRow>)
-};
 
 const ActiveJobsComponent = (props) => {
 
     const styles = useStyles();
 
     const [jobs, setJobs] = useState(new Map());
+    const [jobStatuses, setJobStatuses] = useState(new Map());
 
     ipcRenderer.on('newJobEvent', (event, args) => {
-        // event.stopPropagation();
         setJobs(jobs.set(args.job.jobId, {...args.job, progress: 0}))
     });
 
     ipcRenderer.on('jobProgressEvent', (event, args) => {
-        // event.stopPropagation();
         console.log('jobProgressEvent', args);
-
-        let newJob = {
-            ...jobs.get(args.job.jobId),
-            progress: args.progressEvent.progress
-        };
-
-        // setJobs(jobs.set(args.job.jobId, newJob))
+        setJobStatuses(jobs.set(args.job.jobId, args.progressEvent))
     });
+
+    const ActiveJob = (props) => {
+        const {job} = props;
+
+        let jobStatus = jobStatuses.get(job.jobId) || {progress: 0, finished: false, result: null};
+
+        return (
+            <TableRow>
+                <TableCell component="th" scope="row">
+                    {job.jobId}
+                </TableCell>
+                <TableCell align="right">{jobStatus.finished ? <DoneIcon/> : <CircularProgress/>}</TableCell>
+                <TableCell align="right">{jobStatus.result ? `${Math.floor(jobStatus.result * 100)}%` : ""}</TableCell>
+            </TableRow>)
+    };
 
     return (
         <div className={styles.root}>
@@ -57,8 +52,8 @@ const ActiveJobsComponent = (props) => {
                 <TableHead>
                     <TableRow>
                         <TableCell>Job</TableCell>
-                        <TableCell>Progress</TableCell>
-                        <TableCell>Score</TableCell>
+                        <TableCell align="right">Progress</TableCell>
+                        <TableCell align="right">Similiariy Score</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
