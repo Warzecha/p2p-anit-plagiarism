@@ -54,7 +54,7 @@ module.exports = class ConnectionFacade {
             console.log(`New message from ${remoteInfo.address}:${remoteInfo.port} with id: ${receivedMessage.peerId}`);
             this.currentNetworkPeers = this.currentNetworkPeers.filter(peer => peer.address !== remoteInfo.address);
             this.currentNetworkPeers.push(new NetworkPeerInfo(receivedMessage.peerId, remoteInfo.address));
-            this.sendNetworkMessage()
+            this.sendNetworkMessage(remoteInfo)
         }
 
         this.window.webContents.send('updatePeersNetwork', {
@@ -76,10 +76,6 @@ module.exports = class ConnectionFacade {
         })
     };
 
-    handleJobUpdateMessage = this.onJobUpdateMessage;
-    handleNewJobMessage = this.onNewJobMessage;
-
-
     setSocketProperties = () => {
         this.socket.on('listening', function () {
             console.log("Listening for broadcast message")
@@ -96,10 +92,10 @@ module.exports = class ConnectionFacade {
                     this.handleNetworkInfoMessage(receivedMessage);
                     break;
                 case "JOB_UPDATE":
-                    this.handleJobUpdateMessage(receivedMessage);
+                    this.onJobUpdateMessage(receivedMessage);
                     break;
                 case "NEW_JOB":
-                    await this.handleNewJobMessage(receivedMessage);
+                    await this.onNewJobMessage(receivedMessage);
                     break;
                 default:
                     return;
@@ -135,7 +131,7 @@ module.exports = class ConnectionFacade {
 
     broadcastMessage() {
         this.socket.setBroadcast(true);
-        const messageString = new Buffer(JSON.stringify(new BroadcastMessage(this.peerId)));
+        const messageString = new Buffer(JSON.stringify(new BroadcastMessage(this.peer.peerId)));
         this.socket.send(messageString, 0, messageString.length, PORT, this.broadcastAddress, function () {
             console.log("Sent broadcast message")
         })
