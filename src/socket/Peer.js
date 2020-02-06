@@ -85,14 +85,27 @@ module.exports = class Peer {
 
     handleJobUpdateMessage = (receivedMessage) => {
         console.log("Received job update for job: " + receivedMessage.jobUpdate.jobId);
-        this.activeJobs.forEach(job => {
-            if (job.jobId === receivedMessage.jobUpdate.jobId && !job.finished) {
-                let progress = job.addNewFinishedIndexes(receivedMessage.jobUpdate.finishedIndex.index, receivedMessage.jobUpdate.finishedIndex.size, receivedMessage.results);
-                this.emitJobProgressEvent(job, progress);
-                job.finished = job.finished ? true : receivedMessage.jobUpdate.finished;
+        let currentJob = this.activeJobs.filter(job => job.jobId === receivedMessage.jobUpdate.jobId)[0];
+
+        if (currentJob) {
+
+            try {
+                let progress = currentJob.addNewFinishedIndexes(receivedMessage.jobUpdate.finishedIndex.index, receivedMessage.jobUpdate.finishedIndex.size, receivedMessage.results);
+                this.emitJobProgressEvent(currentJob, progress);
+            } catch (e) {
+                this.emitJobProgressEvent(currentJob, {
+                    finished: true
+                })
             }
-        });
-    };
+            currentJob.finished = currentJob.finished ? true : receivedMessage.jobUpdate.finished;
+
+        } else {
+            let newJob = new Job(receivedMessage.jobUpdate.jobId, receivedMessage.jobUpdate.arrayOfWords, receivedMessage.jobUpdate.finishedChunks, receivedMessage.jobUpdate.finished, receivedMessage.jobUpdate.arrayOfInterestingWords);
+            this.activeJobs.push(newJob);
+            this.emitNewJobEvent(newJob);
+        }
+    }
+
 
     updateJob = async (jobId, finishedIndex, size, results) => {
         this.currentTask = null;
@@ -102,9 +115,9 @@ module.exports = class Peer {
             let job = this.activeJobs[i];
             if (job.jobId === jobId) {
                 let progress = job.addNewFinishedIndexes(finishedIndex, size, results);
-                this.emitJobProgressEvent(job, progress);
                 updated = true;
-                isNowFinished = job.finished
+                isNowFinished = job.finished;
+                this.emitJobProgressEvent(job, progress);
             }
         }
 
@@ -173,7 +186,8 @@ module.exports = class Peer {
 
     }
 
-};
+}
+;
 
 
 function getRandomInt(min, max) {
