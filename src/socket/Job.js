@@ -20,7 +20,12 @@ module.exports = class Job {
 
             let sizes = Object.keys(this.finishedChunks);
 
+            let targetValue = 0;
+            let currentValue = 0;
+
             for (let s of sizes) {
+                targetValue += (this.arrayOfWords.length - parseInt(s) + 1);
+                currentValue += (this.finishedChunks[s].length);
                 console.log("For size: " + s + " " + (this.finishedChunks[s].length) + " of " + (this.arrayOfWords.length - parseInt(s) + 1))
             }
 
@@ -32,11 +37,22 @@ module.exports = class Job {
             }
 
             this.finished = jobIsFinished;
-            //    TODO: announce finished job
 
             if (jobIsFinished) {
+                let totalResult = (this.totalResults.reduce((acc, results) => acc + results.similrityScore, 0)) / this.arrayOfWords.length;
                 console.log("JOB FINISHED");
-                console.log("Results", (this.totalResults.reduce((acc, results) => acc + results.similrityScore, 0)) / this.arrayOfWords.length);
+                console.log("Results", totalResult);
+                return {
+                    finished: true,
+                    progress: 1,
+                    result: totalResult
+                };
+
+            } else {
+                return {
+                    finished: false,
+                    progress: currentValue / targetValue,
+                };
             }
         }
 

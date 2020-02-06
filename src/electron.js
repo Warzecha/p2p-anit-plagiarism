@@ -1,10 +1,7 @@
-const uuid = require('uuid');
-
 const Peer = require('./socket/Peer');
 const ifaces = require('os').networkInterfaces();
 const electron = require('electron');
 const {app, BrowserWindow, Tray, Menu, ipcMain} = electron;
-const axios = require('axios');
 const path = require('path');
 const isDev = require('electron-is-dev');
 require('electron-reload')(__dirname);
@@ -15,19 +12,20 @@ let mainWindow;
 let tray = null;
 let peer = null;
 
-function createWindow() {
+async function createWindow() {
     mainWindow = new BrowserWindow({
-        width: 800,
+        width: 1000,
         height: 600,
         title: "P2P - Anti Plagiarism App",
+        resizable: false,
         webPreferences: {
             nodeIntegration: true,
-            // devTools: true
+            devTools: true
         },
 
     });
 
-    mainWindow.loadURL(
+    await mainWindow.loadURL(
         isDev
             ? 'http://localhost:3000'
             : `file://${path.join(__dirname, '../build/index.html')}`,
@@ -37,7 +35,7 @@ function createWindow() {
         mainWindow = null
     });
 
-    // mainWindow.webContents.openDevTools();
+    mainWindow.webContents.openDevTools();
 
 }
 
@@ -72,9 +70,9 @@ const createTray = () => {
     tray.setContextMenu(contextMenu)
 };
 
-app.on('ready', () => {
+app.on('ready', async () => {
     createTray();
-    createWindow();
+    await createWindow();
 });
 
 ipcMain.on('connectToPearNetwork', ((event) => {
@@ -91,8 +89,6 @@ ipcMain.on('connectToPearNetwork', ((event) => {
 
     setTimeout(() => {
         peer.broadcastMessage();
-        // let customPeersList = [peer.peerId, uuid().toString(), uuid().toString()];
-
         event.sender.send('connectToPearNetworkResponse', {
             peerId: peer.peerId,
         })
@@ -100,11 +96,6 @@ ipcMain.on('connectToPearNetwork', ((event) => {
     }, 2000);
 
 }));
-
-
-// ipcMain.on('updatePeerNetwork', ((event, args) => {
-//
-// }));
 
 ipcMain.on('parseFiles', ((event, args) => {
     args.files.forEach((file) => {
@@ -152,37 +143,14 @@ ipcMain.on('parseFiles', ((event, args) => {
 
             console.log(interestingArray.map(value => value.word));
             peer.createJob(formattedArray, interestingArray.map(value => value.word));
-            // let array5 = splitToArray(formatted, 5);
-            // let array25 = splitToArray(formatted, 25);
         })
 
     })
 
 }));
 
-
-const splitToArray = (formattedText, size) => {
-    let array = [];
-    let words = formattedText.split(' ');
-    if (words.length <= size) {
-        return [formattedText]
-    } else {
-        for (let i = 0; i < words.length - size; i++) {
-            array.push(words.slice(i, i + size).join(' '))
-        }
-        return array;
-    }
-};
-
-
-// app.on('window-all-closed', () => {
-//     if (process.platform !== 'darwin') {
-//         app.quit()
-//     }
-// });
-
-app.on('activate', () => {
+app.on('activate', async () => {
     if (mainWindow === null) {
-        createWindow()
+        await createWindow()
     }
 });

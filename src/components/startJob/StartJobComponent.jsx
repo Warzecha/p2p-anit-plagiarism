@@ -4,9 +4,9 @@ import Typography from "@material-ui/core/Typography";
 import DragAndDropComponent from "./DragAndDropComponent";
 import FileListComponent from "./FileListComponent";
 import {Map} from 'immutable';
-import ConnectRoPeerNetworkButton from "./ConnectToPeerNetworkButtonComponent";
 import CurrentNetworkListComponent from "./CurrentNetworkListComponent";
 import Button from "@material-ui/core/Button";
+import ActiveJobsComponent from "../activeJobs/ActiveJobsComponent";
 
 const {ipcRenderer} = require('electron');
 
@@ -66,18 +66,23 @@ const StartJobComponent = () => {
     return (
         <div className={styles.root}>
             <Typography className={styles.heading} variant="h1" align="center">Start job</Typography>
-            <div className={styles.networkList}>
-                <ConnectRoPeerNetworkButton peersList={peersList} fillPeersList={fillPeersList}
-                                            attachSelfId={attachSelfId}/>
-                <CurrentNetworkListComponent peersList={peersList} selfId={selfId}/>
+            <div style={{display: 'flex', flexDirection: 'row'}}>
+                <div className={styles.fileInputContainer}>
+                    <DragAndDropComponent files={files} onFilesDropped={handleFilesDropped}/>
+                    <FileListComponent files={files} onFileDeleted={handleFileDeleted}/>
+                    {files.size !== 0 && <Button className={styles.button} variant={"contained"} onClick={handleClick}
+                                                 disabled={selfId == null}>
+                        Apply
+                    </Button>}
+                </div>
+
+                <CurrentNetworkListComponent peersList={peersList} selfId={selfId} fillPeersList={fillPeersList}
+                                             attachSelfId={attachSelfId} className={styles.networkList}/>
             </div>
-            <div className={styles.fileInputContainer}>
-                <DragAndDropComponent files={files} onFilesDropped={handleFilesDropped}/>
-                <FileListComponent files={files} onFileDeleted={handleFileDeleted}/>
-            </div>
-            {files.size !==0 && <Button className={styles.button} variant={"contained"} onClick={handleClick} disabled={selfId == null}>
-                Apply
-            </Button>}
+
+
+            <ActiveJobsComponent/>
+
 
         </div>
     );
@@ -91,10 +96,8 @@ const useStyles = makeStyles(() => ({
     },
 
     fileInputContainer: {
-        width: '60%',
-        float: 'left',
         alignItems: 'center',
-        marginLeft: '5%'
+        flex: 3
     },
 
     heading: {
@@ -102,12 +105,10 @@ const useStyles = makeStyles(() => ({
     },
 
     networkList: {
-        display: 'flex',
-        spacing: '10%',
-        alignItems: 'center',
+        flex: 1,
         flexDirection: 'column',
-        float: 'right',
-        width: '30%'
+        alignItems: 'center',
+        justifyItems: 'center'
     },
     button: {
         align: 'center'

@@ -29,6 +29,22 @@ module.exports = class Peer {
         this.socket.bind(PORT)
     }
 
+    emitNewJobEvent(job) {
+        this.window.webContents.send('newJobEvent', {
+            job: job
+        })
+    }
+
+    emitJobProgressEvent(job, progressEvent) {
+        console.log("emitJobProgressEvent");
+        if (progressEvent.finished) {
+            this.window.webContents.send('jobProgressEvent', {
+                job: job,
+                progressEvent: progressEvent
+            })
+        }
+    }
+
     createJob(arrayOfWords, arrayOfInterestingWords) {
         let job = new Job(uuid(), arrayOfWords, {5: [], 25: []}, false, arrayOfInterestingWords);
         this.socket.setBroadcast(false);
@@ -44,6 +60,8 @@ module.exports = class Peer {
         });
 
         this.activeJobs.push(job);
+        this.emitNewJobEvent(job)
+
 
     };
 
@@ -52,7 +70,9 @@ module.exports = class Peer {
         const receivedJob = receivedMessage.job;
         console.log("Received new job: ", receivedJob.jobId);
         if (!this.activeJobs.map(value => value.jobId).includes(receivedJob.jobId)) {
-            this.activeJobs.push(new Job(receivedJob.jobId, receivedJob.arrayOfWords, receivedJob.finishedChunks, receivedJob.finished, receivedJob.arrayOfInterestingWords));
+            let newJob = new Job(receivedJob.jobId, receivedJob.arrayOfWords, receivedJob.finishedChunks, receivedJob.finished, receivedJob.arrayOfInterestingWords);
+            this.activeJobs.push(newJob);
+            this.emitNewJobEvent(newJob)
         }
         if (!this.currentTask) {
             await this.startTask();
@@ -91,7 +111,9 @@ module.exports = class Peer {
 
         receivedMessage.activeJobs.forEach(async (receivedJob) => {
             if (!this.activeJobs.map(j => j.jobId).includes(receivedJob.jobId)) {
-                this.activeJobs.push(new Job(receivedJob.jobId, receivedJob.arrayOfWords, receivedJob.finishedChunks, receivedJob.finished, receivedJob.arrayOfInterestingWords))
+                let newJob = new Job(receivedJob.jobId, receivedJob.arrayOfWords, receivedJob.finishedChunks, receivedJob.finished, receivedJob.arrayOfInterestingWords);
+                this.activeJobs.push(newJob);
+                this.emitNewJobEvent(newJob)
             }
 
         });
@@ -105,7 +127,8 @@ module.exports = class Peer {
         console.log("Received job update for job: " + receivedMessage.jobUpdate.jobId);
         this.activeJobs.forEach(job => {
             if (job.jobId === receivedMessage.jobUpdate.jobId && !job.finished) {
-                job.addNewFinishedIndexes(receivedMessage.jobUpdate.finishedIndex.index, receivedMessage.jobUpdate.finishedIndex.size, receivedMessage.results);
+                let progress = job.addNewFinishedIndexes(receivedMessage.jobUpdate.finishedIndex.index, receivedMessage.jobUpdate.finishedIndex.size, receivedMessage.results);
+                this.emitJobProgressEvent(job, progress);
                 job.finished = job.finished ? true : receivedMessage.jobUpdate.finished;
             }
         });
@@ -147,7 +170,8 @@ module.exports = class Peer {
         for (let i = 0; i < this.activeJobs.length; i++) {
             let job = this.activeJobs[i];
             if (job.jobId === jobId) {
-                job.addNewFinishedIndexes(finishedIndex, size, results);
+                let progress = job.addNewFinishedIndexes(finishedIndex, size, results);
+                this.emitJobProgressEvent(job, progress);
                 updated = true;
                 isNowFinished = job.finished
             }
@@ -229,6 +253,14 @@ module.exports = class Peer {
             let taskWordsArray = this.getTaskData(job.arrayOfWords, task.size, task.index);
             let results = await this.validationManager.validate(taskWordsArray, job.arrayOfInterestingWords);
             console.log("Results: ", results);
+
+
+            this.window.webContents.send('jobFinished', {
+                job: job,
+                results: results
+            });
+
+
             await this.updateJob(job.jobId, task.index, task.size, results);
         }
 
