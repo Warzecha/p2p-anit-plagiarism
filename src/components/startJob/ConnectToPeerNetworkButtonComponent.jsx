@@ -29,7 +29,9 @@ const ConnectToPeerNetworkButton = (props) => {
         <div className={styles.root}>
             <Button style={{
                 marginTop: '10px'
-            }} disabled={isConnected} variant={"contained"}
+            }}
+                    // disabled={isConnected}
+                    variant={"contained"}
                     onClick={handleClick}>Connect</Button>
             {isLoading && <CircularProgress className={styles.progress}/>}
         </div>

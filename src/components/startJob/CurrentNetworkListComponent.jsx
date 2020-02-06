@@ -37,8 +37,8 @@ const useStyles = makeStyles(() => ({
     root: {
         border: '2px solid black',
         borderRadius: 25,
-        width: '80%',
-        marginTop: '10%'
+        width: '90%',
+        marginTop: 20
     }
 }));
 
