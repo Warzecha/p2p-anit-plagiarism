@@ -84,7 +84,7 @@ ipcMain.on('connectToPearNetwork', ((event) => {
     console.log(ip);
     console.log(finalBroadCast);
 
-    peer = new Peer(ip, finalBroadCast, mainWindow);
+    peer = new Peer(ip, finalBroadCast, mainWindow, );
     peer.bindPeer();
 
     setTimeout(() => {

@@ -7,6 +7,10 @@ import {Map} from 'immutable';
 import CurrentNetworkListComponent from "./CurrentNetworkListComponent";
 import Button from "@material-ui/core/Button";
 import ActiveJobsComponent from "../activeJobs/ActiveJobsComponent";
+import FormControl from "@material-ui/core/FormControl";
+import InputLabel from "@material-ui/core/InputLabel";
+import Select from "@material-ui/core/Select";
+import MenuItem from "@material-ui/core/MenuItem";
 
 const {ipcRenderer} = require('electron');
 
@@ -16,6 +20,8 @@ const StartJobComponent = () => {
     const [files, setFiles] = useState(new Map());
     const [peersList, setPeersList] = useState([]);
     const [selfId, setSelId] = useState(null);
+
+    const [strategy, setStrategy] = React.useState('wiki');
 
     useEffect(() => {
         document.title = 'P2P Anti Plagiarism App'
@@ -33,7 +39,8 @@ const StartJobComponent = () => {
         console.log('Sending');
 
         let data = {
-            files: []
+            files: [],
+            strategy: strategy
         };
         files.toIndexedSeq().forEach(((value) => {
             data.files.push({
@@ -63,6 +70,10 @@ const StartJobComponent = () => {
         setSelId(peerId);
     };
 
+    const handleChange = event => {
+        setStrategy(event.target.value);
+    };
+
     return (
         <div className={styles.root}>
             <Typography className={styles.heading} variant="h1" align="center">Start job</Typography>
@@ -70,19 +81,36 @@ const StartJobComponent = () => {
                 <div className={styles.fileInputContainer}>
                     <DragAndDropComponent files={files} onFilesDropped={handleFilesDropped}/>
                     <FileListComponent files={files} onFileDeleted={handleFileDeleted}/>
-                    {files.size !== 0 && <Button className={styles.button} variant={"contained"} onClick={handleClick}
-                                                 disabled={selfId == null}>
-                        Apply
-                    </Button>}
+
                 </div>
 
                 <CurrentNetworkListComponent peersList={peersList} selfId={selfId} fillPeersList={fillPeersList}
                                              attachSelfId={attachSelfId} className={styles.networkList}/>
             </div>
 
+            <div style={{display: 'flex', justifyContent: 'space-around'}}>
+                <FormControl>
+                    <InputLabel>Strategy</InputLabel>
+                    <Select
+                        value={strategy}
+                        onChange={handleChange}
+                    >
+                        <MenuItem value={'wiki'}>Wikipedia</MenuItem>
+                        <MenuItem value={'bing'}>Bing Search</MenuItem>
+                    </Select>
+                </FormControl>
+
+                <div>
+                    {files.size !== 0 && <Button className={styles.button} variant={"contained"} onClick={handleClick}
+                                                 disabled={selfId == null}>
+                        Apply
+                    </Button>}
+                </div>
+
+            </div>
+
 
             <ActiveJobsComponent/>
-
 
         </div>
     );

@@ -33,14 +33,13 @@ const ActiveJobsComponent = (props) => {
         const {job} = props;
 
         let jobStatus = jobStatuses.get(job.jobId) || {progress: 0, finished: false, result: null};
-
         return (
             <TableRow>
                 <TableCell component="th" scope="row">
                     {job.jobId}
                 </TableCell>
                 <TableCell align="right">{jobStatus.finished ? <DoneIcon/> : <CircularProgress/>}</TableCell>
-                <TableCell align="right">{jobStatus.result ? `${Math.floor(jobStatus.result * 100)}%` : ""}</TableCell>
+                <TableCell align="right">{jobStatus.result != null ? `${Math.floor(jobStatus.result * 100)}%` : ""}</TableCell>
             </TableRow>)
     };
 

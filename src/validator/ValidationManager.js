@@ -29,17 +29,11 @@ function ValidationManager(strategy) {
             try {
                 content = await this.fetchContent(keyword);
 
-                // console.log("keyword", keyword);
-
-
                 let contentText = content[0].parsed.split(' ');
-                // console.log("WIKI", contentText);
-
 
                 for (let i = 0; i < contentText.length - sectionLength; i++) {
 
                     let subarray = contentText.slice(i, i + sectionLength);
-                    // console.log("WIKI", subarray)
 
                     let sectionScore = 0;
 

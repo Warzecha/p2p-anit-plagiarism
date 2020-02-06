@@ -105,7 +105,7 @@ module.exports = class ConnectionFacade {
         })
     };
 
-    setJobUpdateNotification = async (jobId, finishedIndex, size, results, isNowFinished, arrayOfInfestingWords, finishedChunks, arrayOfWords) => {
+    setJobUpdateNotification = async (jobId, finishedIndex, size, results, isNowFinished, arrayOfInfestingWords, finishedChunks, arrayOfWords, strategy) => {
         this.socket.setBroadcast(false);
         const jobUpdateMessageString = new Buffer(JSON.stringify({
             messageType: 'JOB_UPDATE',
@@ -119,7 +119,8 @@ module.exports = class ConnectionFacade {
                 arrayOfWords: arrayOfWords,
                 finishedChunks: finishedChunks,
                 results: results,
-                finished: isNowFinished
+                finished: isNowFinished,
+                strategy: strategy
             }
         }));
 

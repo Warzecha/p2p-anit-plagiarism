@@ -1,9 +1,11 @@
 module.exports = class Job {
-    constructor(jobId, arrayOfWords, finishedChunks, finished, arrayOfInterestingWords) {
+    constructor(jobId, arrayOfWords, finishedChunks, finished, arrayOfInterestingWords, strategy) {
         this.jobId = jobId;
         this.arrayOfWords = arrayOfWords;
         this.arrayOfInterestingWords = arrayOfInterestingWords;
         this.finishedChunks = finishedChunks;
+
+        this.strategy = strategy || 'wiki';
 
         this.totalResults = [];
 
