@@ -76,6 +76,7 @@ module.exports = class ConnectionFacade {
         })
     };
 
+
     setSocketProperties = () => {
         this.socket.on('listening', function () {
             console.log("Listening for broadcast message")
@@ -105,7 +106,7 @@ module.exports = class ConnectionFacade {
         })
     };
 
-    setJobUpdateNotification = async (jobId, finishedIndex, size, results, isNowFinished) => {
+    setJobUpdateNotification = async (jobId, finishedIndex, size, results, isNowFinished, arrayOfInfestingWords, finishedChunks, arrayOfWords) => {
         this.socket.setBroadcast(false);
         const jobUpdateMessageString = new Buffer(JSON.stringify({
             messageType: 'JOB_UPDATE',
@@ -115,6 +116,9 @@ module.exports = class ConnectionFacade {
                     index: finishedIndex,
                     size: size
                 },
+                arrayOfInfestingWords: arrayOfInfestingWords,
+                arrayOfWords: arrayOfWords,
+                finishedChunks: finishedChunks,
                 results: results,
                 finished: isNowFinished
             }

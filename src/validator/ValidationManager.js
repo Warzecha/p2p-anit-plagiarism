@@ -22,10 +22,6 @@ function ValidationManager(strategy) {
 
         let similarResults = [];
 
-        wordsArray = wordsArray.slice()
-
-        // console.log("keywords", keywords);
-        // console.log("words", wordsArray);
 
 
         let content;

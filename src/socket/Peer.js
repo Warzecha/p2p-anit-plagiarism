@@ -79,8 +79,8 @@ module.exports = class Peer {
                 this.activeJobs.push(newJob);
                 this.emitNewJobEvent(newJob)
             }
-
         });
+
     };
 
     handleJobUpdateMessage = (receivedMessage) => {
@@ -98,18 +98,32 @@ module.exports = class Peer {
         this.currentTask = null;
         let updated = false;
         let isNowFinished = false;
+        let arrayOfInterestingWords = [];
+        let finishedChunks = [];
+        let arrayOfWords = [];
         for (let i = 0; i < this.activeJobs.length; i++) {
             let job = this.activeJobs[i];
             if (job.jobId === jobId) {
                 let progress = job.addNewFinishedIndexes(finishedIndex, size, results);
                 this.emitJobProgressEvent(job, progress);
                 updated = true;
-                isNowFinished = job.finished
+                isNowFinished = job.finished;
+                arrayOfInterestingWords = job.arrayOfInterestingWords;
+                finishedChunks = job.finishedChunks;
             }
         }
 
+
         if (updated) {
-            await this.connectionFacade.setJobUpdateNotification(jobId, finishedIndex, size, results, isNowFinished);
+            await this.connectionFacade.setJobUpdateNotification(
+                jobId,
+                finishedIndex,
+                size,
+                results,
+                isNowFinished,
+                arrayOfInterestingWords,
+                finishedChunks,
+                arrayOfWords);
         }
 
         await this.startTask();
