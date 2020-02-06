@@ -1,32 +1,30 @@
-const NetworkPeerInfo = require("./NetworkPeerInfo");
-const BroadcastMessage = require("./BroadcastMessage");
 const Job = require("./Job");
+const ConnectionFacade = require("./ConnectionFacade");
 const uuid = require('uuid/v1');
-const dgram = require('dgram');
 const {ValidationManager} = require("./../validator/ValidationManager");
 const {WikiDataStrategy} = require("./../validator/WikipediaSourceStrategy");
 
-const PORT = 8080;
 
 module.exports = class Peer {
     constructor(address, broadcastAddress, window) {
         this.peerId = uuid().toString();
-        console.log(this.peerId);
-        this.socket = dgram.createSocket("udp4");
-        this.setSocketProperties();
-        this.broadcastAddress = broadcastAddress;
-        this.currentNetworkPeers = [];
-        this.currentNetworkPeers.push(new NetworkPeerInfo(this.peerId, address));
         this.window = window;
         this.activeJobs = [];
         this.currentTask = null;
-
         this.validationManager = new ValidationManager(WikiDataStrategy);
+
+        this.connectionFacade = new ConnectionFacade(address,
+            broadcastAddress,
+            this,
+            this.handleJobUpdateMessage,
+            this.handleNetworkInfoMessage,
+            this.handleNewJobMessage,
+            this.window)
 
     }
 
     bindPeer() {
-        this.socket.bind(PORT)
+        this.connectionFacade.bindPeer()
     }
 
     emitNewJobEvent(job) {
@@ -47,17 +45,12 @@ module.exports = class Peer {
 
     createJob(arrayOfWords, arrayOfInterestingWords) {
         let job = new Job(uuid(), arrayOfWords, {5: [], 25: []}, false, arrayOfInterestingWords);
-        this.socket.setBroadcast(false);
         const newJobMessageString = new Buffer(JSON.stringify({
             messageType: 'NEW_JOB',
             job: job
         }));
 
-        this.currentNetworkPeers.forEach(peer => {
-            this.socket.send(newJobMessageString, 0, newJobMessageString.length, PORT, peer.peerAddress, () => {
-                console.log("Sending new job to: " + peer.peerId + " for job: " + job.jobId)
-            })
-        });
+        this.connectionFacade.sendNewJobNotification(newJobMessageString, job);
 
         this.activeJobs.push(job);
         this.emitNewJobEvent(job)
@@ -79,36 +72,7 @@ module.exports = class Peer {
         }
     };
 
-    handleBroadcastMessage = (receivedMessage, remoteInfo) => {
-        if (receivedMessage.peerId === this.peerId) {
-            console.log(`Broadcast received from self: ${this.peerId}`)
-        } else {
-            console.log(`New message from ${remoteInfo.address}:${remoteInfo.port} with id: ${receivedMessage.peerId}`);
-            this.currentNetworkPeers = this.currentNetworkPeers.filter(peer => peer.address !== remoteInfo.address);
-            this.currentNetworkPeers.push(new NetworkPeerInfo(receivedMessage.peerId, remoteInfo.address));
-            this.socket.setBroadcast(false);
-            let networkMessage = new Buffer(JSON.stringify({
-                messageType: 'NETWORK_MESSAGE',
-                network: this.currentNetworkPeers,
-                activeJobs: this.activeJobs
-            }));
-            this.socket.send(networkMessage, 0, networkMessage.length, PORT, remoteInfo.address, () => {
-                console.log("Sending current network to: " + remoteInfo.address)
-            })
-        }
-
-        this.window.webContents.send('updatePeersNetwork', {
-            currentNetworkPeers: this.currentNetworkPeers
-        })
-    };
-
     handleNetworkInfoMessage = (receivedMessage) => {
-        receivedMessage.network.forEach((value) => {
-            if (!this.currentNetworkPeers.map(value1 => value1.peerId).includes(value.peerId)) {
-                this.currentNetworkPeers.push(new NetworkPeerInfo(value.peerId, value.peerAddress))
-            }
-        });
-
         receivedMessage.activeJobs.forEach(async (receivedJob) => {
             if (!this.activeJobs.map(j => j.jobId).includes(receivedJob.jobId)) {
                 let newJob = new Job(receivedJob.jobId, receivedJob.arrayOfWords, receivedJob.finishedChunks, receivedJob.finished, receivedJob.arrayOfInterestingWords);
@@ -117,10 +81,6 @@ module.exports = class Peer {
             }
 
         });
-
-        this.window.webContents.send('updatePeersNetwork', {
-            currentNetworkPeers: this.currentNetworkPeers
-        })
     };
 
     handleJobUpdateMessage = (receivedMessage) => {
@@ -132,35 +92,6 @@ module.exports = class Peer {
                 job.finished = job.finished ? true : receivedMessage.jobUpdate.finished;
             }
         });
-    };
-
-    setSocketProperties = () => {
-        this.socket.on('listening', function () {
-            console.log("Listening for broadcast message")
-        });
-
-        this.socket.on('message', async (receivedMessage, remoteInfo) => {
-            receivedMessage = JSON.parse(receivedMessage);
-            const messageType = receivedMessage.messageType;
-            switch (messageType) {
-                case "BROADCAST":
-                    this.handleBroadcastMessage(receivedMessage, remoteInfo);
-                    break;
-                case "NETWORK_MESSAGE":
-                    this.handleNetworkInfoMessage(receivedMessage);
-                    break;
-                case "JOB_UPDATE":
-                    this.handleJobUpdateMessage(receivedMessage);
-                    break;
-                case "NEW_JOB":
-                    await this.handleNewJobMessage(receivedMessage);
-                    break;
-                default:
-                    return;
-            }
-
-
-        })
     };
 
     updateJob = async (jobId, finishedIndex, size, results) => {
@@ -178,27 +109,7 @@ module.exports = class Peer {
         }
 
         if (updated) {
-            this.socket.setBroadcast(false);
-            const jobUpdateMessageString = new Buffer(JSON.stringify({
-                messageType: 'JOB_UPDATE',
-                jobUpdate: {
-                    jobId: jobId,
-                    finishedIndex: {
-                        index: finishedIndex,
-                        size: size
-                    },
-                    results: results,
-                    finished: isNowFinished
-                }
-            }));
-
-            for (let peer of this.currentNetworkPeers) {
-                if (peer.peerId !== this.peerId) {
-                    await this.socket.send(jobUpdateMessageString, 0, jobUpdateMessageString.length, PORT, peer.peerAddress, () => {
-                        console.log("Sending job update to: " + peer.peerId + " for job: " + jobId)
-                    })
-                }
-            }
+            await this.connectionFacade.setJobUpdateNotification(jobId, finishedIndex, size, results, isNowFinished);
         }
 
         await this.startTask();
@@ -206,11 +117,7 @@ module.exports = class Peer {
     };
 
     broadcastMessage() {
-        this.socket.setBroadcast(true);
-        const messageString = new Buffer(JSON.stringify(new BroadcastMessage(this.peerId)));
-        this.socket.send(messageString, 0, messageString.length, PORT, this.broadcastAddress, function () {
-            console.log("Sent broadcast message")
-        })
+        this.connectionFacade.broadcastMessage();
     }
 
     findAvailableTask = () => {
