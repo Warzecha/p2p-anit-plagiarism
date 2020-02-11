@@ -51,6 +51,7 @@ module.exports = class Peer {
     emitJobProgressEvent(job, progressEvent) {
         if (progressEvent.finished) {
             console.log("emitJobProgressEvent finished");
+            this.currentTask = null;
             this.window.webContents.send('jobProgressEvent', {
                 job: job,
                 progressEvent: progressEvent
@@ -98,7 +99,6 @@ module.exports = class Peer {
     handleJobUpdateMessage = (receivedMessage) => {
         console.log("Received job update for job: " + receivedMessage.jobUpdate.jobId);
         let currentJob = this.activeJobs.filter(job => job.jobId === receivedMessage.jobUpdate.jobId)[0];
-        console.log(currentJob);
 
         if (currentJob) {
 
