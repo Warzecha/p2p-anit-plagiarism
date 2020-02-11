@@ -79,7 +79,7 @@ ipcMain.on('connectToPearNetwork', ((event) => {
     const {ip, mask} = getIpAndMask();
     let broadcast = ip.split('.');
     console.log(broadcast);
-    let finalBroadCast = `${broadcast[0]}.${broadcast[1]}.${broadcast[2]}.15`;
+    let finalBroadCast = `${broadcast[0]}.${broadcast[1]}.${broadcast[2]}.255`;
 
     console.log(ip);
     console.log(finalBroadCast);
@@ -142,7 +142,7 @@ ipcMain.on('parseFiles', ((event, args) => {
             }
 
             console.log(interestingArray.map(value => value.word));
-            peer.createJob(formattedArray, interestingArray.map(value => value.word));
+            peer.createJob(formattedArray, interestingArray.map(value => value.word), args.strategy);
         })
 
     })

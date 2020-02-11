@@ -7,7 +7,7 @@ const {BingSearchStrategy} = require("./../validator/BingSourceStrategy");
 
 
 module.exports = class Peer {
-    constructor(address, broadcastAddress, window, strategy) {
+    constructor(address, broadcastAddress, window) {
         this.peerId = uuid().toString();
         this.window = window;
         this.activeJobs = [];
@@ -24,12 +24,17 @@ module.exports = class Peer {
     }
 
     selectStrategy(strategy) {
-        if (strategy === 'bing') {
-            this.validationManager = new ValidationManager(BingSearchStrategy);
-        } else if (strategy === 'wiki') {
-            this.validationManager = new ValidationManager(WikiDataStrategy);
-        } else {
-            this.validationManager = new ValidationManager(WikiDataStrategy);
+
+        switch (strategy) {
+            case 'bing':
+                this.validationManager.setStrategy(BingSearchStrategy);
+                break;
+            case 'wiki':
+                this.validationManager.setStrategy(WikiDataStrategy);
+                break;
+            default:
+                this.validationManager.setStrategy(WikiDataStrategy);
+                break;
         }
     }
 
@@ -42,6 +47,7 @@ module.exports = class Peer {
             job: job
         })
     }
+
 
     emitJobProgressEvent(job, progressEvent) {
         console.log("emitJobProgressEvent");
@@ -71,7 +77,7 @@ module.exports = class Peer {
         const receivedJob = receivedMessage.job;
         console.log("Received new job: ", receivedJob.jobId);
         if (!this.activeJobs.map(value => value.jobId).includes(receivedJob.jobId)) {
-            let newJob = new Job(receivedJob.jobId, receivedJob.arrayOfWords, receivedJob.finishedChunks, receivedJob.finished, receivedJob.arrayOfInterestingWords, receivedJob.strategy);
+            let newJob = Job.copy(receivedMessage.jobUpdate);
             this.activeJobs.push(newJob);
             this.emitNewJobEvent(newJob)
         }
@@ -83,7 +89,7 @@ module.exports = class Peer {
     handleNetworkInfoMessage = (receivedMessage) => {
         receivedMessage.activeJobs.forEach(async (receivedJob) => {
             if (!this.activeJobs.map(j => j.jobId).includes(receivedJob.jobId)) {
-                let newJob = new Job(receivedJob.jobId, receivedJob.arrayOfWords, receivedJob.finishedChunks, receivedJob.finished, receivedJob.arrayOfInterestingWords, receivedJob.strategy);
+                let newJob = Job.copy(receivedJob);
                 this.activeJobs.push(newJob);
                 this.emitNewJobEvent(newJob)
             }
@@ -108,7 +114,7 @@ module.exports = class Peer {
             currentJob.finished = currentJob.finished ? true : receivedMessage.jobUpdate.finished;
 
         } else {
-            let newJob = new Job(receivedMessage.jobUpdate.jobId, receivedMessage.jobUpdate.arrayOfWords, receivedMessage.jobUpdate.finishedChunks, receivedMessage.jobUpdate.finished, receivedMessage.jobUpdate.arrayOfInterestingWords, receivedMessage.strategy);
+            let newJob = Job.copy(receivedMessage.jobUpdate);
             this.activeJobs.push(newJob);
             this.emitNewJobEvent(newJob);
         }
@@ -117,38 +123,16 @@ module.exports = class Peer {
 
     updateJob = async (jobId, finishedIndex, size, results) => {
         this.currentTask = null;
-        let updated = false;
-        let isNowFinished = false;
-        let arrayOfInterestingWords = [];
-        let finishedChunks = [];
-        let arrayOfWords = [];
-        let strategy = null;
-        for (let i = 0; i < this.activeJobs.length; i++) {
-            let job = this.activeJobs[i];
-            if (job.jobId === jobId) {
-                let progress = job.addNewFinishedIndexes(finishedIndex, size, results);
-                updated = true;
-                isNowFinished = job.finished;
-                arrayOfInterestingWords = job.arrayOfInterestingWords;
-                finishedChunks = job.finishedChunks;
-                strategy = job.strategy;
-                this.emitJobProgressEvent(job, progress);
-            }
-        }
 
+        let updatedJob = this.activeJobs.filter(activeJob => activeJob.jobId === jobId)[0];
 
-        if (updated) {
-            await this.connectionFacade.setJobUpdateNotification(
-                jobId,
-                finishedIndex,
-                size,
-                results,
-                isNowFinished,
-                arrayOfInterestingWords,
-                finishedChunks,
-                arrayOfWords,
-                strategy
-            );
+        if (updatedJob) {
+            let progress = updatedJob.addNewFinishedIndexes(finishedIndex, size, results);
+            this.emitJobProgressEvent(updatedJob, progress);
+            await this.connectionFacade.setJobUpdateNotification(updatedJob)
+
+        } else {
+            //    TODO: add to active jobs
         }
 
         await this.startTask();
@@ -162,10 +146,8 @@ module.exports = class Peer {
     findAvailableTask = () => {
         let jobToDo = this.activeJobs.filter(value => !value.finished)[0];
 
-        this.selectStrategy(jobToDo.strategy);
-
         if (jobToDo) {
-
+            this.selectStrategy(jobToDo.strategy);
             let availableTasks = [];
 
             Object.keys(jobToDo.finishedChunks).forEach(size => {
@@ -182,6 +164,8 @@ module.exports = class Peer {
 
             // console.log("Available tasks left: ", availableTasks);
             return availableTasks[getRandomInt(0, availableTasks.length - 1)]
+        } else {
+            console.log("Finished")
         }
     };
 
@@ -196,12 +180,12 @@ module.exports = class Peer {
     startTask = async () => {
         let task = this.findAvailableTask();
         if (task) {
-            console.log("Found task:", {i: task.index, s: task.size});
+            // console.log("Found task:", {i: task.index, s: task.size});
             this.currentTask = task;
             let job = this.activeJobs.filter(item => item.jobId === task.jobId)[0];
             let taskWordsArray = this.getTaskData(job.arrayOfWords, task.size, task.index);
             let results = await this.validationManager.validate(taskWordsArray, job.arrayOfInterestingWords);
-            console.log("Results: ", results);
+            // console.log("Results: ", results);
 
             this.window.webContents.send('jobFinished', {
                 job: job,

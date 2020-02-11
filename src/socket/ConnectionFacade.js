@@ -105,29 +105,17 @@ module.exports = class ConnectionFacade {
         })
     };
 
-    setJobUpdateNotification = async (jobId, finishedIndex, size, results, isNowFinished, arrayOfInfestingWords, finishedChunks, arrayOfWords, strategy) => {
+    setJobUpdateNotification = async (job) => {
         this.socket.setBroadcast(false);
         const jobUpdateMessageString = new Buffer(JSON.stringify({
             messageType: 'JOB_UPDATE',
-            jobUpdate: {
-                jobId: jobId,
-                finishedIndex: {
-                    index: finishedIndex,
-                    size: size
-                },
-                arrayOfInfestingWords: arrayOfInfestingWords,
-                arrayOfWords: arrayOfWords,
-                finishedChunks: finishedChunks,
-                results: results,
-                finished: isNowFinished,
-                strategy: strategy
-            }
+            jobUpdate: job
         }));
 
         for (let peer of this.currentNetworkPeers) {
             if (peer.peerId !== this.peer.peerId) {
                 await this.socket.send(jobUpdateMessageString, 0, jobUpdateMessageString.length, PORT, peer.peerAddress, () => {
-                    console.log("Sending job update to: " + peer.peerId + " for job: " + jobId)
+                    console.log("Sending job update to: " + peer.peerId + " for job: " + job.jobId)
                 })
             }
         }

@@ -6,9 +6,7 @@ module.exports = class Job {
         this.finishedChunks = finishedChunks;
 
         this.strategy = strategy || 'wiki';
-
         this.totalResults = [];
-
         this.finished = finished;
     }
 
@@ -28,7 +26,6 @@ module.exports = class Job {
             for (let s of sizes) {
                 targetValue += (this.arrayOfWords.length - parseInt(s) + 1);
                 currentValue += (this.finishedChunks[s].length);
-                console.log("For size: " + s + " " + (this.finishedChunks[s].length) + " of " + (this.arrayOfWords.length - parseInt(s) + 1))
             }
 
             for (let key of Object.keys(this.finishedChunks)) {
@@ -40,9 +37,11 @@ module.exports = class Job {
 
             this.finished = jobIsFinished;
 
+            console.log(`Progress: ${currentValue} of ${targetValue}`);
+
             if (jobIsFinished) {
-                let totalResult = (this.totalResults.reduce((acc, results) => acc + results.similrityScore, 0)) / this.arrayOfWords.length;
-                console.log("JOB FINISHED");
+                let totalResult = (this.totalResults.reduce((acc, results) => acc + 1, 0)) / targetValue;
+                console.log("JOB FINISHED", this.totalResults);
                 console.log("Results", totalResult);
                 return {
                     finished: true,
@@ -63,5 +62,14 @@ module.exports = class Job {
         }
 
     };
+
+    static copy(other) {
+        return new Job(other.jobId,
+            other.arrayOfWords,
+            other.finishedChunks,
+            other.finished,
+            other.arrayOfInterestingWords,
+            other.strategy)
+    }
 
 };

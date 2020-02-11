@@ -21,7 +21,7 @@ const getSearchResults = async (keyword) => {
         let data = [];
 
 
-        for (let url of pdfUrlList.slice(0,1)) {
+        for (let url of pdfUrlList.slice(0, 1)) {
             let response = await crawler(url)
 
             let formatted = response.text
@@ -33,9 +33,6 @@ const getSearchResults = async (keyword) => {
             data.push(formatted)
 
         }
-
-
-        console.log(data);
         return data;
 
     } catch (e) {

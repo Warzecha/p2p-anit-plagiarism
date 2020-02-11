@@ -6,7 +6,6 @@ import {
 
 import useMainStyle from "../styles/MainStyle";
 import StartJobComponent from "../components/startJob/StartJobComponent";
-import ActiveJobsComponent from "../components/activeJobs/ActiveJobsComponent";
 
 export default function MainNavigation() {
     const classes = useMainStyle();
