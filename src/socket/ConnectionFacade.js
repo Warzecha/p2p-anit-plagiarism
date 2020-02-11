@@ -105,11 +105,12 @@ module.exports = class ConnectionFacade {
         })
     };
 
-    setJobUpdateNotification = async (job) => {
+    setJobUpdateNotification = async (job, result) => {
         this.socket.setBroadcast(false);
         const jobUpdateMessageString = new Buffer(JSON.stringify({
             messageType: 'JOB_UPDATE',
-            jobUpdate: job
+            jobUpdate: job,
+            result: result
         }));
 
         for (let peer of this.currentNetworkPeers) {

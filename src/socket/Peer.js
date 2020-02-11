@@ -90,19 +90,30 @@ module.exports = class Peer {
             if (!this.activeJobs.map(j => j.jobId).includes(receivedJob.jobId)) {
                 let newJob = Job.copy(receivedJob);
                 this.activeJobs.unshift(newJob);
-                this.emitNewJobEvent(newJob)
+                this.emitNewJobEvent(newJob);
             }
         });
+
 
     };
 
     handleJobUpdateMessage = (receivedMessage) => {
         console.log("Received job update for job: " + receivedMessage.jobUpdate.jobId);
         let currentJob = this.activeJobs.filter(job => job.jobId === receivedMessage.jobUpdate.jobId)[0];
+        console.log(currentJob.finished);
 
         if (currentJob) {
 
             if (currentJob.finished) {
+                return;
+            }
+
+            if (receivedMessage.jobUpdate.finished) {
+                this.emitJobProgressEvent(currentJob, {
+                    finished: true,
+                    result: receivedMessage.result
+                });
+                currentJob.finished = true;
                 return;
             }
 
@@ -127,7 +138,7 @@ module.exports = class Peer {
         if (updatedJob) {
             let progress = updatedJob.addNewFinishedIndexes(finishedIndex, size, results);
             this.emitJobProgressEvent(updatedJob, progress);
-            await this.connectionFacade.setJobUpdateNotification(updatedJob);
+            await this.connectionFacade.setJobUpdateNotification(updatedJob, progress.result);
             if (!updatedJob.finished) {
                 await this.startTask();
             }
