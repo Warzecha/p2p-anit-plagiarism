@@ -48,14 +48,17 @@ module.exports = class Peer {
         })
     }
 
-    emitJobProgressEvent(job, progressEvent) {
+    async emitJobProgressEvent(job, progressEvent) {
         if (progressEvent.finished) {
-            console.log("emitJobProgressEvent finished");
+            console.log("emitJobProgressEvent finished", job.jobId);
             this.currentTask = null;
+            // if ()
             this.window.webContents.send('jobProgressEvent', {
                 job: job,
                 progressEvent: progressEvent
             })
+            await this.startTask();
+
         }
     }
 
@@ -204,6 +207,8 @@ module.exports = class Peer {
 
 
             await this.updateJob(job.jobId, task.index, task.size, results);
+        } else {
+            return;
         }
 
     }

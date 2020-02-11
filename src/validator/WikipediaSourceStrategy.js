@@ -5,7 +5,6 @@ const prepareUrl = (title) => encodeURI(contentUrl + title.replace(/\s+/g, '_'))
 const searchUrl = (keyword) => `https://pl.wikipedia.org/w/api.php?format=json&action=opensearch&search=${keyword}`;
 const contentUrl = `https://pl.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&format=json&titles=`;
 
-
 const getWikiContent = async (keyword) => {
     try {
         const searchResponse = await axios.get(searchUrl(keyword));

@@ -5,6 +5,7 @@ const prepareUrl = (keyword) => encodeURI(getSearchUrl(keyword));
 const getSearchUrl = (keyword) => `https://api.cognitive.microsoft.com/bingcustomsearch/v7.0/search?q=${keyword}+pdf&customconfig=60e9d352-3ed0-4af1-92cc-03f665324ea3&mkt=pl-PL`;
 const crawler = require('crawler-request');
 
+
 const getSearchResults = async (keyword) => {
     try {
         const searchResponse = (await axios.get(prepareUrl(keyword), {

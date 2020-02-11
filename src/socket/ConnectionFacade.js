@@ -19,6 +19,8 @@ module.exports = class ConnectionFacade {
         this.onNewJobMessage = onNewJobMessage;
     }
 
+
+
     bindPeer() {
         this.socket.bind(PORT)
     }

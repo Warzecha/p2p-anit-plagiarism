@@ -21,12 +21,12 @@ const ActiveJobsComponent = (props) => {
     const [jobStatuses, setJobStatuses] = useState(new Map());
 
     ipcRenderer.on('newJobEvent', (event, args) => {
-        setJobs(jobs.set(args.job.jobId, {...args.job, progress: 0}))
+        setJobs(prevState => prevState.set(args.job.jobId, {...args.job, progress: 0}))
     });
 
     ipcRenderer.on('jobProgressEvent', (event, args) => {
-        console.log('jobProgressEvent', args);
-        setJobStatuses(jobs.set(args.job.jobId, args.progressEvent))
+        console.log('jobProgressEvent', args.job.jobId, args.progressEvent);
+        setJobStatuses(prevState => prevState.set(args.job.jobId, args.progressEvent))
     });
 
     const ActiveJob = (props) => {
@@ -39,7 +39,8 @@ const ActiveJobsComponent = (props) => {
                     {job.jobId}
                 </TableCell>
                 <TableCell align="right">{jobStatus.finished ? <DoneIcon/> : <CircularProgress/>}</TableCell>
-                <TableCell align="right">{jobStatus.result != null ? `${Math.floor(jobStatus.result * 100)}%` : ""}</TableCell>
+                <TableCell
+                    align="right">{jobStatus.result != null ? `${Math.floor(jobStatus.result * 100)}%` : ""}</TableCell>
             </TableRow>)
     };
 
