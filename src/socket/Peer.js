@@ -99,7 +99,11 @@ module.exports = class Peer {
         console.log("Received job update for job: " + receivedMessage.jobUpdate.jobId);
         let currentJob = this.activeJobs.filter(job => job.jobId === receivedMessage.jobUpdate.jobId)[0];
 
-        if (currentJob && !currentJob.finished) {
+        if (currentJob) {
+
+            if (currentJob.finished) {
+                return;
+            }
 
             try {
                 let progress = currentJob.addNewFinishedIndexes(receivedMessage.jobUpdate.finishedIndex.index, receivedMessage.jobUpdate.finishedIndex.size, receivedMessage.results);
