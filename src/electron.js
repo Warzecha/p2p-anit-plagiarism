@@ -144,7 +144,7 @@ ipcMain.on('parseFiles', ((event, args) => {
             }
 
             console.log(interestingArray.map(value => value.word));
-            peer.createJob(formattedArray, interestingArray.map(value => value.word), args.strategy);
+            peer.createJob(formattedArray, interestingArray.map(value => value.word), args.strategy, path);
         })
 
     })

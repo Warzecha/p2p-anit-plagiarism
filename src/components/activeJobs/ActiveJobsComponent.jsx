@@ -36,7 +36,7 @@ const ActiveJobsComponent = (props) => {
         return (
             <TableRow>
                 <TableCell component="th" scope="row">
-                    {job.jobId}
+                    {job.filePath}
                 </TableCell>
                 <TableCell align="right">{jobStatus.finished ? <DoneIcon/> : <CircularProgress/>}</TableCell>
                 <TableCell

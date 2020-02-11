@@ -1,7 +1,7 @@
 const Job = require("./Job");
-const ConnectionFacade = require("./ConnectionFacade");
+const Connection = require("./Connection");
 const uuid = require('uuid/v1');
-const {ValidationManager} = require("./../validator/ValidationManager");
+const {ValidationFacade} = require("./../validator/ValidationFacade");
 const {WikiDataStrategy} = require("./../validator/WikipediaSourceStrategy");
 const {BingSearchStrategy} = require("./../validator/BingSourceStrategy");
 
@@ -12,9 +12,9 @@ module.exports = class Peer {
         this.window = window;
         this.activeJobs = [];
         this.currentTask = null;
-        this.validationManager = new ValidationManager(WikiDataStrategy);
+        this.validationFacade = new ValidationFacade(WikiDataStrategy);
 
-        this.connectionFacade = new ConnectionFacade(address,
+        this.connectionFacade = new Connection(address,
             broadcastAddress,
             this,
             this.handleJobUpdateMessage,
@@ -27,13 +27,13 @@ module.exports = class Peer {
 
         switch (strategy) {
             case 'bing':
-                this.validationManager.setStrategy(BingSearchStrategy);
+                this.validationFacade.setStrategy(BingSearchStrategy);
                 break;
             case 'wiki':
-                this.validationManager.setStrategy(WikiDataStrategy);
+                this.validationFacade.setStrategy(WikiDataStrategy);
                 break;
             default:
-                this.validationManager.setStrategy(WikiDataStrategy);
+                this.validationFacade.setStrategy(WikiDataStrategy);
                 break;
         }
     }
@@ -62,8 +62,8 @@ module.exports = class Peer {
         }
     }
 
-    createJob(arrayOfWords, arrayOfInterestingWords, strategy) {
-        let job = new Job(uuid(), arrayOfWords, {5: [], 25: []}, false, arrayOfInterestingWords, strategy);
+    createJob(arrayOfWords, arrayOfInterestingWords, strategy, filePath) {
+        let job = new Job(uuid(), arrayOfWords, {5: [], 25: []}, false, arrayOfInterestingWords, strategy, filePath);
         const newJobMessageString = new Buffer(JSON.stringify({
             messageType: 'NEW_JOB',
             job: job
@@ -197,7 +197,7 @@ module.exports = class Peer {
             this.currentTask = task;
             let job = this.activeJobs.filter(item => item.jobId === task.jobId)[0];
             let taskWordsArray = this.getTaskData(job.arrayOfWords, task.size, task.index);
-            let results = await this.validationManager.validate(taskWordsArray, job.arrayOfInterestingWords);
+            let results = await this.validationFacade.validate(taskWordsArray, job.arrayOfInterestingWords);
             // console.log("Results: ", results);
 
             this.window.webContents.send('jobFinished', {
