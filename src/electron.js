@@ -75,6 +75,7 @@ app.on('ready', async () => {
     await createWindow();
 });
 
+
 ipcMain.on('connectToPearNetwork', ((event) => {
     const {ip, mask} = getIpAndMask();
     let broadcast = ip.split('.');
@@ -87,7 +88,6 @@ ipcMain.on('connectToPearNetwork', ((event) => {
 
     peer = new Peer(ip, finalBroadCast, mainWindow, );
     peer.bindPeer();
-
 
     setTimeout(() => {
         peer.broadcastMessage();

@@ -82,31 +82,31 @@ const StartJobComponent = () => {
                     <DragAndDropComponent files={files} onFilesDropped={handleFilesDropped}/>
                     <FileListComponent files={files} onFileDeleted={handleFileDeleted}/>
 
+                    <div style={{display: 'flex', justifyContent: 'space-around'}}>
+                        <FormControl>
+                            <InputLabel>Strategy</InputLabel>
+                            <Select
+                                value={strategy}
+                                onChange={handleChange}
+                            >
+                                <MenuItem value={'wiki'}>Wikipedia</MenuItem>
+                                <MenuItem value={'bing'}>Bing Search</MenuItem>
+                            </Select>
+                        </FormControl>
+
+                        <div>
+                            {files.size !== 0 &&
+                            <Button className={styles.button} variant={"contained"} onClick={handleClick}
+                                    disabled={selfId == null}>
+                                Apply
+                            </Button>}
+                        </div>
+
+                    </div>
                 </div>
 
                 <CurrentNetworkListComponent peersList={peersList} selfId={selfId} fillPeersList={fillPeersList}
                                              attachSelfId={attachSelfId} className={styles.networkList}/>
-            </div>
-
-            <div style={{display: 'flex', justifyContent: 'space-around'}}>
-                <FormControl>
-                    <InputLabel>Strategy</InputLabel>
-                    <Select
-                        value={strategy}
-                        onChange={handleChange}
-                    >
-                        <MenuItem value={'wiki'}>Wikipedia</MenuItem>
-                        <MenuItem value={'bing'}>Bing Search</MenuItem>
-                    </Select>
-                </FormControl>
-
-                <div>
-                    {files.size !== 0 && <Button className={styles.button} variant={"contained"} onClick={handleClick}
-                                                 disabled={selfId == null}>
-                        Apply
-                    </Button>}
-                </div>
-
             </div>
 
 
