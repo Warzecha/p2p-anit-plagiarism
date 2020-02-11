@@ -75,16 +75,18 @@ app.on('ready', async () => {
     await createWindow();
 });
 
+
 ipcMain.on('connectToPearNetwork', ((event) => {
     const {ip, mask} = getIpAndMask();
     let broadcast = ip.split('.');
     console.log(broadcast);
-    let finalBroadCast = `${broadcast[0]}.${broadcast[1]}.${broadcast[2]}.255`;
+
+    let finalBroadCast = `${broadcast[0]}.${broadcast[1]}.${broadcast[2]}.15`;
 
     console.log(ip);
     console.log(finalBroadCast);
 
-    peer = new Peer(ip, finalBroadCast, mainWindow);
+    peer = new Peer(ip, finalBroadCast, mainWindow, );
     peer.bindPeer();
 
     setTimeout(() => {
@@ -142,7 +144,7 @@ ipcMain.on('parseFiles', ((event, args) => {
             }
 
             console.log(interestingArray.map(value => value.word));
-            peer.createJob(formattedArray, interestingArray.map(value => value.word));
+            peer.createJob(formattedArray, interestingArray.map(value => value.word), args.strategy);
         })
 
     })

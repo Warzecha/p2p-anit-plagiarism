@@ -1,18 +1,19 @@
 module.exports = class Job {
-    constructor(jobId, arrayOfWords, finishedChunks, finished, arrayOfInterestingWords) {
+    constructor(jobId, arrayOfWords, finishedChunks, finished, arrayOfInterestingWords, strategy) {
         this.jobId = jobId;
         this.arrayOfWords = arrayOfWords;
         this.arrayOfInterestingWords = arrayOfInterestingWords;
         this.finishedChunks = finishedChunks;
 
+        this.strategy = strategy || 'wiki';
         this.totalResults = [];
-
         this.finished = finished;
     }
 
+
     addNewFinishedIndexes = (index, size, results) => {
 
-        if (!this.finishedChunks[size].includes(index)) {
+        if (!this.finishedChunks[size].includes(index) && !this.finished) {
             this.finishedChunks[size].push(index);
             this.totalResults = this.totalResults.concat(results);
 
@@ -26,7 +27,6 @@ module.exports = class Job {
             for (let s of sizes) {
                 targetValue += (this.arrayOfWords.length - parseInt(s) + 1);
                 currentValue += (this.finishedChunks[s].length);
-                console.log("For size: " + s + " " + (this.finishedChunks[s].length) + " of " + (this.arrayOfWords.length - parseInt(s) + 1))
             }
 
             for (let key of Object.keys(this.finishedChunks)) {
@@ -38,9 +38,11 @@ module.exports = class Job {
 
             this.finished = jobIsFinished;
 
+            console.log(`Progress: ${currentValue} of ${targetValue}`);
+
             if (jobIsFinished) {
-                let totalResult = (this.totalResults.reduce((acc, results) => acc + results.similrityScore, 0)) / this.arrayOfWords.length;
-                console.log("JOB FINISHED");
+                let totalResult = (this.totalResults.reduce((acc, results) => acc + 1, 0)) / targetValue;
+                console.log("JOB FINISHED", this.totalResults);
                 console.log("Results", totalResult);
                 return {
                     finished: true,
@@ -54,8 +56,21 @@ module.exports = class Job {
                     progress: currentValue / targetValue,
                 };
             }
+        } else {
+            return {
+                finished: false
+            }
         }
 
     };
+
+    static copy(other) {
+        return new Job(other.jobId,
+            other.arrayOfWords,
+            other.finishedChunks,
+            other.finished,
+            other.arrayOfInterestingWords,
+            other.strategy)
+    }
 
 };
