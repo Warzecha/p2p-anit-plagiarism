@@ -67,7 +67,7 @@ module.exports = class Peer {
         }));
 
         this.connectionFacade.sendNewJobNotification(newJobMessageString, job);
-        this.activeJobs.push(job);
+        this.activeJobs.unshift(job);
         this.emitNewJobEvent(job)
     };
 
@@ -77,7 +77,7 @@ module.exports = class Peer {
         console.log("Received new job: ", receivedJob.jobId);
         if (!this.activeJobs.map(value => value.jobId).includes(receivedJob.jobId)) {
             let newJob = Job.copy(receivedJob);
-            this.activeJobs.push(newJob);
+            this.activeJobs.unshift(newJob);
             this.emitNewJobEvent(newJob)
         }
         if (!this.currentTask) {
@@ -89,7 +89,7 @@ module.exports = class Peer {
         receivedMessage.activeJobs.forEach(async (receivedJob) => {
             if (!this.activeJobs.map(j => j.jobId).includes(receivedJob.jobId)) {
                 let newJob = Job.copy(receivedJob);
-                this.activeJobs.push(newJob);
+                this.activeJobs.unshift(newJob);
                 this.emitNewJobEvent(newJob)
             }
         });
@@ -113,7 +113,7 @@ module.exports = class Peer {
 
         } else {
             let newJob = Job.copy(receivedMessage.jobUpdate);
-            this.activeJobs.push(newJob);
+            this.activeJobs.unshift(newJob);
             this.emitNewJobEvent(newJob);
         }
     };
