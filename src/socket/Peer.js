@@ -48,10 +48,9 @@ module.exports = class Peer {
         })
     }
 
-
     emitJobProgressEvent(job, progressEvent) {
-        console.log("emitJobProgressEvent");
         if (progressEvent.finished) {
+            console.log("emitJobProgressEvent finished");
             this.window.webContents.send('jobProgressEvent', {
                 job: job,
                 progressEvent: progressEvent
@@ -67,7 +66,6 @@ module.exports = class Peer {
         }));
 
         this.connectionFacade.sendNewJobNotification(newJobMessageString, job);
-
         this.activeJobs.push(job);
         this.emitNewJobEvent(job)
     };
@@ -77,7 +75,7 @@ module.exports = class Peer {
         const receivedJob = receivedMessage.job;
         console.log("Received new job: ", receivedJob.jobId);
         if (!this.activeJobs.map(value => value.jobId).includes(receivedJob.jobId)) {
-            let newJob = Job.copy(receivedMessage.jobUpdate);
+            let newJob = Job.copy(receivedJob);
             this.activeJobs.push(newJob);
             this.emitNewJobEvent(newJob)
         }
@@ -129,13 +127,14 @@ module.exports = class Peer {
         if (updatedJob) {
             let progress = updatedJob.addNewFinishedIndexes(finishedIndex, size, results);
             this.emitJobProgressEvent(updatedJob, progress);
-            await this.connectionFacade.setJobUpdateNotification(updatedJob)
+            await this.connectionFacade.setJobUpdateNotification(updatedJob);
+            if (!updatedJob.finished) {
+                await this.startTask();
+            }
 
         } else {
             //    TODO: add to active jobs
         }
-
-        await this.startTask();
 
     };
 

@@ -10,6 +10,7 @@ module.exports = class Job {
         this.finished = finished;
     }
 
+
     addNewFinishedIndexes = (index, size, results) => {
 
         if (!this.finishedChunks[size].includes(index) && !this.finished) {
