@@ -98,6 +98,7 @@ module.exports = class Peer {
     handleJobUpdateMessage = (receivedMessage) => {
         console.log("Received job update for job: " + receivedMessage.jobUpdate.jobId);
         let currentJob = this.activeJobs.filter(job => job.jobId === receivedMessage.jobUpdate.jobId)[0];
+        console.log(currentJob);
 
         if (currentJob) {
 
@@ -105,15 +106,10 @@ module.exports = class Peer {
                 return;
             }
 
-            try {
-                let progress = currentJob.addNewFinishedIndexes(receivedMessage.jobUpdate.finishedIndex.index, receivedMessage.jobUpdate.finishedIndex.size, receivedMessage.results);
-                this.emitJobProgressEvent(currentJob, progress);
-            } catch (e) {
-                this.emitJobProgressEvent(currentJob, {
-                    finished: true
-                })
-            }
-            currentJob.finished = currentJob.finished ? true : receivedMessage.jobUpdate.finished;
+            let progress = currentJob.addNewFinishedIndexes(receivedMessage.jobUpdate.finishedIndex.index, receivedMessage.jobUpdate.finishedIndex.size, receivedMessage.results);
+            this.emitJobProgressEvent(currentJob, progress);
+
+            // currentJob.finished = currentJob.finished ? true : receivedMessage.jobUpdate.finished;
 
         } else {
             let newJob = Job.copy(receivedMessage.jobUpdate);
