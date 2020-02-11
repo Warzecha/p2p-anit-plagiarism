@@ -4,8 +4,8 @@ const levenshtein = require('js-levenshtein');
 function LevensteinValidator() {
 
     this.validate = (wordsArray, content) => {
-
         let sectionLength = wordsArray.length;
+
 
         let similarResults = [];
 

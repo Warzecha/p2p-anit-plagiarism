@@ -20,7 +20,6 @@ async function createWindow() {
         resizable: false,
         webPreferences: {
             nodeIntegration: true,
-            devTools: true
         },
 
     });
@@ -34,8 +33,6 @@ async function createWindow() {
     mainWindow.on('closed', () => {
         mainWindow = null
     });
-
-    mainWindow.webContents.openDevTools();
 
 }
 
