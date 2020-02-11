@@ -62,6 +62,7 @@ module.exports = class Peer {
         }
     }
 
+
     createJob(arrayOfWords, arrayOfInterestingWords, strategy, filePath) {
         let job = new Job(uuid(), arrayOfWords, {5: [], 25: []}, false, arrayOfInterestingWords, strategy, filePath);
         const newJobMessageString = new Buffer(JSON.stringify({
@@ -72,8 +73,8 @@ module.exports = class Peer {
         this.connectionFacade.sendNewJobNotification(newJobMessageString, job);
         this.activeJobs.unshift(job);
         this.emitNewJobEvent(job)
-    };
 
+    };
 
     handleNewJobMessage = async (receivedMessage) => {
         const receivedJob = receivedMessage.job;
@@ -119,9 +120,16 @@ module.exports = class Peer {
                 currentJob.finished = true;
                 return;
             }
+            try {
+                let progress = currentJob.addNewFinishedIndexes(receivedMessage.jobUpdate.finishedIndex.index, receivedMessage.jobUpdate.finishedIndex.size, receivedMessage.results);
+                this.emitJobProgressEvent(currentJob, progress);
+            } catch (e) {
+                this.emitJobProgressEvent(currentJob, {
+                    finished: true,
+                    result: receivedMessage.result
+                });
 
-            let progress = currentJob.addNewFinishedIndexes(receivedMessage.jobUpdate.finishedIndex.index, receivedMessage.jobUpdate.finishedIndex.size, receivedMessage.results);
-            this.emitJobProgressEvent(currentJob, progress);
+            }
 
             // currentJob.finished = currentJob.finished ? true : receivedMessage.jobUpdate.finished;
 
@@ -156,9 +164,10 @@ module.exports = class Peer {
         this.connectionFacade.broadcastMessage();
     }
 
+
     findAvailableTask = () => {
         let jobToDo = this.activeJobs.filter(value => !value.finished)[0];
-
+        console.log("NEW JONBDSAD: ", jobToDo);
         if (jobToDo) {
             this.selectStrategy(jobToDo.strategy);
             let availableTasks = [];
@@ -190,10 +199,11 @@ module.exports = class Peer {
         }
     };
 
+
     startTask = async () => {
         let task = this.findAvailableTask();
         if (task) {
-            // console.log("Found task:", {i: task.index, s: task.size});
+            console.log("Found task:", task.jobId);
             this.currentTask = task;
             let job = this.activeJobs.filter(item => item.jobId === task.jobId)[0];
             let taskWordsArray = this.getTaskData(job.arrayOfWords, task.size, task.index);
