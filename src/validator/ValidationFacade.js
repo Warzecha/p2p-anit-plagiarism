@@ -15,12 +15,13 @@ function ValidationFacade(strategy) {
         }
     };
 
+
     this.setStrategy = (strategy) => {
         this.strategy = strategy;
     };
 
-    this.validate = async (wordsArray, keywords) => {
 
+    this.validate = async (wordsArray, keywords) => {
         let similarResults = [];
 
         let content;
